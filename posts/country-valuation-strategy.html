@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Country Valuation Strategy | actuallyfinance</title>
+  <meta name="description" content="Draft post based on the Country Valuation Strategy report.">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="../index.html" aria-label="actuallyfinance home">
+        <span class="brand-mark">$</span>
+        <span>actuallyfinance</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html">Home</a>
+        <a class="active" href="../index.html#posts">Posts</a>
+        <a href="../index.html#tools">Tools</a>
+        <a href="https://twitter.com/actuallyfinance">Twitter</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="article">
+    <p class="eyebrow">Research draft</p>
+    <h1>Country Valuation Strategy: Findings &amp; Robustness</h1>
+    <p class="article-lede">A web version of the report covering a rules-based country rotation strategy using MSCI IMI net-return data, Barclays/Faber CAPE valuations, trend filters, momentum exclusions, and an EIU Democracy Index filter.</p>
+
+    <figure class="article-figure">
+      <img src="../assets/country-valuation-equity.png" alt="Equity curve for the country valuation strategy against benchmarks">
+      <figcaption>Report figure placeholder: strategy growth path versus the equal-weight country basket and ACWI-family benchmarks.</figcaption>
+    </figure>
+
+    <section class="article-section">
+      <h2>Executive Summary</h2>
+      <p>The locked-in baseline ranks 44 MSCI IMI countries by CAPE, selects the cheapest septile, applies a 200-day SMA trend filter, excludes countries that have freshly turned negative on momentum, and removes countries with a declining illiberal Democracy Index profile.</p>
+      <p>In the report window from 1997-10-07 to 2026-04-16, the strategy produced a 13.9% CAGR and 0.91 Sharpe after 10 bps per side transaction costs, compared with 8.2% for an equal-weight basket of the same country universe.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>What The Strategy Does</h2>
+      <ul>
+        <li><strong>CAPE selection:</strong> rank countries from cheapest to most expensive and hold the cheapest septile.</li>
+        <li><strong>Trend overlay:</strong> hold selected countries only when price is above the 200-day moving average.</li>
+        <li><strong>Fresh-negative momentum:</strong> exclude countries whose trailing return has turned negative after a previously positive window.</li>
+        <li><strong>Democracy filter:</strong> exclude countries below a Democracy Index threshold when the score is also deteriorating.</li>
+      </ul>
+    </section>
+
+    <div class="callout">
+      <strong>Draft note:</strong> This page is intentionally structured as a polished placeholder. The next pass can convert more tables and figures from the Word report into native HTML sections.
+    </div>
+
+    <section class="article-section">
+      <h2>Robustness Notes</h2>
+      <p>The report emphasizes that the outperformance is broad-based across subperiods, and a leave-one-country-out test suggests no single country is load-bearing. It also flags real limitations: Democracy Index data starts in 2006, several Eastern European CAPE histories begin later than the full sample, and parameter choices are partly informed by the same data used to measure performance.</p>
+    </section>
+
+    <figure class="article-figure">
+      <img src="../assets/country-valuation-drawdowns.png" alt="Drawdown chart for the country valuation strategy">
+      <figcaption>Report figure placeholder: drawdowns are materially smaller than the naive equal-weight country basket in the sample.</figcaption>
+    </figure>
+
+    <div class="inline-actions">
+      <a class="button" href="../tools/country-cape-backtest.html">Open related tool</a>
+      <a class="button secondary" href="../index.html">Back to homepage</a>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>actuallyfinance | Investing research and finance tools</title>
+  <meta name="description" content="Investing research, personal finance notes, and webapps from actuallyfinance.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="top-banner" href="#subscribe">Under construction. Sign up at the bottom of the page to receive updates.</a>
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="index.html" aria-label="actuallyfinance home">
+        <span class="brand-mark">$</span>
+        <span>actuallyfinance</span>
+      </a>
+      <div class="nav-links">
+        <a class="active" href="index.html">Home</a>
+        <a href="#posts">Posts</a>
+        <a href="#tools">Tools</a>
+        <a href="https://twitter.com/actuallyfinance">Twitter</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Investing research + personal finance tools</p>
+        <h1 id="hero-title">actuallyfinance</h1>
+        <p class="hero-copy">Country valuation work, practical portfolio experiments, and calculators that make financial tradeoffs easier to see.</p>
+        <div class="hero-actions">
+          <a class="button" href="posts/country-valuation-strategy.html">Read the first research post</a>
+          <a class="button secondary" href="tools/country-cape-backtest.html">Open the CAPE tool</a>
+        </div>
+      </div>
+
+      <a class="market-panel market-panel-link" href="posts/country-valuation-strategy.html" aria-label="Read the country valuation strategy research post">
+        <div class="panel-bar">
+          <span>Country valuation strategy</span>
+          <span>Read research</span>
+        </div>
+        <img src="assets/country-valuation-equity.png" alt="Equity curve chart for the country valuation strategy">
+        <div class="stat-strip">
+          <div class="stat"><b>13.9%</b><span>Strategy CAGR</span></div>
+          <div class="stat"><b>0.91</b><span>Sharpe</span></div>
+          <div class="stat"><b>-27.8%</b><span>Max drawdown</span></div>
+          <div class="stat"><b>44</b><span>Country universe</span></div>
+        </div>
+      </a>
+    </section>
+
+    <section class="section" id="posts" aria-labelledby="posts-title">
+      <div class="section-head">
+        <h2 id="posts-title">Latest Posts</h2>
+        <p>Research notes can range from full strategy writeups to shorter personal finance breakdowns.</p>
+      </div>
+
+      <div class="grid posts-grid">
+        <article class="card">
+          <a href="posts/country-valuation-strategy.html" class="feature-image">
+            <img src="assets/country-valuation-drawdowns.png" alt="Drawdown chart from the country valuation strategy report">
+          </a>
+          <div class="card-body">
+            <div class="meta">
+              <span>Research</span>
+              <span>Country CAPE</span>
+              <span>Draft</span>
+            </div>
+            <h3><a href="posts/country-valuation-strategy.html">Country Valuation Strategy: Findings &amp; Robustness</a></h3>
+            <p>A readable version of the attached report: cheap-country selection, trend filters, fresh-negative momentum, democracy filter, and robustness checks.</p>
+            <div class="inline-actions">
+              <a class="button secondary" href="posts/country-valuation-strategy.html">Preview post</a>
+            </div>
+          </div>
+        </article>
+
+        <div class="compact-list" aria-label="Post placeholders">
+          <a class="mini-link" href="#">
+            <span class="tag">Personal finance</span>
+            <strong>How I think about cash, T-bills, and emergency funds</strong>
+            <span>Placeholder for a practical money-management post.</span>
+          </a>
+          <a class="mini-link" href="#">
+            <span class="tag">Investing</span>
+            <strong>When valuation is useful, and when it gets you in trouble</strong>
+            <span>Placeholder for a shorter essay tied to the research stack.</span>
+          </a>
+          <a class="mini-link" href="#">
+            <span class="tag">Tools</span>
+            <strong>Behind the country CAPE backtest webapp</strong>
+            <span>Placeholder for methodology and data notes.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tools" aria-labelledby="tools-title">
+      <div class="section-head">
+        <h2 id="tools-title">Tools</h2>
+        <p>Small webapps for testing assumptions instead of arguing with vibes.</p>
+      </div>
+
+      <div class="grid tools-grid">
+        <article class="card tool-card">
+          <div class="tool-top">
+            <strong>Country CAPE Rotation Backtest</strong>
+            <div class="tool-kpi">
+              <span>2,016 runs</span>
+              <span>5 benchmarks</span>
+              <span>1997+</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3>Country CAPE Backtest</h3>
+            <p>Interactive strategy grid for CAPE baskets, trend filters, momentum filters, robustness toggles, and trading costs.</p>
+            <div class="inline-actions">
+              <a class="button" href="tools/country-cape-backtest.html">View mockup</a>
+              <a class="button secondary" href="https://actuallyfin.github.io/country-cape-backtest/">Live app</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card tool-card">
+          <div class="tool-top gold">
+            <strong>Retirement Contributions</strong>
+            <div class="tool-kpi">
+              <span>401k</span>
+              <span>IRA</span>
+              <span>HSA</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3>Contribution Optimizer</h3>
+            <p>Placeholder for a tool that ranks account contributions by tax treatment, match value, liquidity, and household constraints.</p>
+            <div class="inline-actions">
+              <a class="button secondary" href="#">Coming soon</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card tool-card">
+          <div class="tool-top green">
+            <strong>Portfolio Diagnostics</strong>
+            <div class="tool-kpi">
+              <span>Fees</span>
+              <span>Risk</span>
+              <span>Taxes</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <h3>Portfolio Checkup</h3>
+            <p>Placeholder for a personal finance workflow around allocation drift, fund overlap, expense ratios, and concentration.</p>
+            <div class="inline-actions">
+              <a class="button secondary" href="#">Coming soon</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="subscribe" aria-labelledby="subscribe-title">
+      <div class="newsletter">
+        <div>
+          <h2 id="subscribe-title">Notes from @actuallyfinance</h2>
+          <p>A simple slot for future email capture, RSS, or a direct link back to Twitter/X while the site is young.</p>
+        </div>
+        <form class="signup">
+          <input type="email" placeholder="email@example.com" aria-label="Email address">
+          <button class="button" type="submit">Subscribe</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>actuallyfinance.com</span>
+      <span>Research, calculators, and notes. Not investment advice.</span>
+    </div>
+  </footer>
+</body>
+</html>
