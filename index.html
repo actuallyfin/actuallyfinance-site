@@ -164,12 +164,15 @@
       <div class="newsletter">
         <div>
           <h2 id="subscribe-title">Notes from @actuallyfinance</h2>
-          <p>Get new posts, tools, and site updates by email. This signup is live and sends subscriptions to the actuallyfinance Buttondown list.</p>
+          <p>Get new posts, tools, and site updates from actuallyfinance by email.</p>
         </div>
         <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/actuallyfinance" method="post">
           <input type="email" name="email" placeholder="email@example.com" aria-label="Email address" required>
           <input type="hidden" name="embed" value="1">
           <input type="hidden" name="metadata__source" value="actuallyfinance-site">
+          <input type="hidden" name="utm_source" value="actuallyfinance-site">
+          <input type="hidden" name="utm_medium" value="website">
+          <input type="hidden" name="utm_campaign" value="homepage-signup">
           <button class="button" type="submit">Subscribe</button>
         </form>
       </div>

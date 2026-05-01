@@ -525,6 +525,37 @@ h1 {
   padding: 48px 24px 72px;
 }
 
+.handoff-page {
+  min-height: calc(100vh - 88px);
+  display: grid;
+  align-items: center;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 64px 24px 80px;
+}
+
+.handoff-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: clamp(26px, 6vw, 48px);
+  box-shadow: 0 20px 60px rgba(39, 54, 73, 0.1);
+}
+
+.handoff-card h1 {
+  font-size: clamp(40px, 7vw, 70px);
+}
+
+.handoff-card p {
+  margin: 18px 0 0;
+  color: #475467;
+  font-size: 18px;
+}
+
+.handoff-card .inline-actions {
+  margin-top: 30px;
+}
+
 .tool-shell {
   display: grid;
   grid-template-columns: 310px minmax(0, 1fr);
