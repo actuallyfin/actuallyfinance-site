@@ -390,6 +390,10 @@ h1 {
   background: linear-gradient(135deg, var(--green), #5a7d45);
 }
 
+.tool-top.slate {
+  background: linear-gradient(135deg, #41506b, #0b6f7a);
+}
+
 .tool-kpi {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -621,6 +625,58 @@ h1 {
   object-position: left center;
 }
 
+.dashboard-preview {
+  padding: 18px;
+  background: #f7f8f4;
+}
+
+.signal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.signal {
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.signal strong {
+  display: block;
+  font-size: 13px;
+}
+
+.signal span {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 760;
+}
+
+.signal.good span {
+  color: var(--green);
+}
+
+.signal.warn span {
+  color: var(--gold);
+}
+
+.signal.risk span {
+  color: var(--red);
+}
+
+.cycle-bar {
+  margin-top: 18px;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: linear-gradient(90deg, #285f48 0 40%, #a66d1f 40% 72%, #9a3d36 72% 100%);
+}
+
 @media (max-width: 860px) {
   .nav {
     align-items: flex-start;
@@ -640,6 +696,10 @@ h1 {
   .newsletter,
   .tool-shell {
     grid-template-columns: 1fr;
+  }
+
+  .signal-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .hero {
@@ -701,5 +761,9 @@ h1 {
 
   .footer-inner {
     flex-direction: column;
+  }
+
+  .signal-grid {
+    grid-template-columns: 1fr;
   }
 }
