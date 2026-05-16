@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Country CAPE Rotation Backtest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; background: #f5f6fa; color: #222;
+  }
+  header {
+    background: #1e3a5f; color: #fff; padding: 14px 24px;
+    border-bottom: 3px solid #0a9396;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 19px; font-weight: 600; }
+  header .subtitle { font-size: 12.5px; opacity: 0.85; margin-top: 3px; }
+  header .home-link {
+    color: #fff; text-decoration: none; font-size: 12.5px; opacity: 0.85;
+    white-space: nowrap;
+  }
+  header .home-link:hover { opacity: 1; text-decoration: underline; }
+  .layout {
+    display: grid; grid-template-columns: 320px 1fr; gap: 18px;
+    padding: 18px; max-width: 1400px; margin: 0 auto;
+  }
+  .sidebar {
+    background: #fff; border: 1px solid #d0d7de; border-radius: 6px;
+    padding: 16px; height: fit-content; position: sticky; top: 18px;
+  }
+  .sidebar h2 {
+    margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #1e3a5f;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-group label.field {
+    display: block; font-size: 11.5px; font-weight: 600;
+    color: #444; margin-bottom: 5px; text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .form-group select {
+    width: 100%; padding: 7px 8px; font-size: 13px;
+    border: 1px solid #d0d7de; border-radius: 4px; background: #fff;
+  }
+  .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
+  .checkbox-group label {
+    font-size: 13px; display: flex; align-items: center;
+    gap: 7px; cursor: pointer; padding: 2px 0;
+  }
+  button.primary {
+    background: #1e3a5f; color: #fff; border: none;
+    padding: 10px 14px; font-size: 12.5px; font-weight: 600;
+    border-radius: 4px; cursor: pointer; width: 100%;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  button.primary:hover { background: #274a74; }
+  .note {
+    font-size: 11.5px; color: #57606a; margin-top: 12px;
+    line-height: 1.5; padding-top: 12px; border-top: 1px solid #eaeef2;
+  }
+  .main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .panel {
+    background: #fff; border: 1px solid #d0d7de; border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .panel h3 {
+    margin: 0 0 14px 0; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #1e3a5f;
+    border-bottom: 1px solid #eaeef2; padding-bottom: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th, table td {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid #eaeef2;
+  }
+  table th {
+    background: #f6f8fa; font-weight: 600; color: #57606a;
+    text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.04em;
+  }
+  table td.num, table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .strategy-row td:first-child { font-weight: 500; }
+  .strategy-cell {
+    display: flex; align-items: flex-start; gap: 7px;
+    white-space: normal; line-height: 1.35; min-width: 0;
+  }
+  .strategy-cell .legend-dot { margin-top: 5px; flex-shrink: 0; }
+  .strategy-name { overflow-wrap: anywhere; word-break: normal; }
+  .legend-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    margin-right: 7px; vertical-align: middle;
+  }
+  .chart-wrap { position: relative; height: 440px; }
+  #loading { padding: 60px; text-align: center; color: #57606a; font-size: 14px; }
+  .pos { color: #0a7d2e; }
+  .neg { color: #c1121f; }
+  .glossary details {
+    border-top: 1px solid #eaeef2; padding: 10px 0;
+  }
+  .glossary details:first-of-type { border-top: none; padding-top: 4px; }
+  .glossary summary {
+    cursor: pointer; font-weight: 600; font-size: 13px;
+    color: #1e3a5f; padding: 4px 0;
+    list-style: none;
+  }
+  .glossary summary::-webkit-details-marker { display: none; }
+  .glossary summary::before {
+    content: "▸"; display: inline-block; width: 14px;
+    color: #57606a; font-size: 11px;
+    transition: transform 0.15s ease;
+  }
+  .glossary details[open] summary::before { transform: rotate(90deg); }
+  .glossary dl {
+    margin: 10px 0 4px 18px; display: grid;
+    grid-template-columns: minmax(180px, auto) 1fr;
+    column-gap: 16px; row-gap: 10px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .glossary dt {
+    font-weight: 600; color: #1e3a5f;
+  }
+  .glossary dd {
+    margin: 0; color: #333;
+  }
+  .glossary p { font-size: 13px; line-height: 1.5; }
+  .glossary a { color: #1e3a5f; text-decoration: underline; word-break: break-word; }
+  .glossary a:hover { color: #0a9396; }
+  .resources ul { margin: 10px 0 4px 18px; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
+  .resources li { margin-bottom: 8px; }
+  @media (max-width: 720px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 10px;
+    }
+    header { padding: 12px 14px; }
+    header h1 { font-size: 17px; }
+    header .subtitle { font-size: 11.5px; }
+    .sidebar {
+      position: static; top: auto;
+      padding: 14px;
+    }
+    .sidebar h2 { font-size: 12px; }
+    .form-group { margin-bottom: 11px; }
+    .form-group select {
+      font-size: 15px; padding: 9px 10px;
+    }
+    .checkbox-group { gap: 8px; }
+    .checkbox-group label { font-size: 14px; padding: 6px 0; }
+    .checkbox-group input[type=checkbox] { width: 18px; height: 18px; }
+    button.primary { padding: 12px 14px; font-size: 13px; }
+    .panel { padding: 12px 12px; }
+    .panel h3 { font-size: 12px; }
+    .chart-wrap { height: 300px; }
+    #stats-table { font-size: 12px; }
+    #stats-table th, #stats-table td { padding: 6px 8px; }
+    .panel table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .glossary dl { grid-template-columns: 1fr; row-gap: 4px; }
+    .glossary dd { margin-bottom: 8px; }
+    .glossary summary { font-size: 14px; padding: 6px 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Country CAPE Rotation Backtest</h1>
+    <div class="subtitle">Interactive backtests on 44-country MSCI IMI NETR universe (1997-present)</div>
+  </div>
+  <a class="home-link" href="https://actuallyfinance.com/">&larr; actuallyfinance.com</a>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Portfolio</h2>
+    <div class="form-group">
+      <label class="field" for="cape">CAPE Strategy</label>
+      <select id="cape"></select>
+    </div>
+    <div class="form-group">
+      <label class="field" for="trend">Trend Filter</label>
+      <select id="trend"></select>
+    </div>
+    <div class="form-group">
+      <label class="field" for="mom">Momentum Filter</label>
+      <select id="mom"></select>
+    </div>
+    <div class="form-group">
+      <label class="field" for="ex">Country Exclusion</label>
+      <select id="ex"></select>
+    </div>
+    <div class="form-group">
+      <label class="field" for="cost">Trading Cost</label>
+      <select id="cost">
+        <option value="0">0 bps / side (frictionless)</option>
+        <option value="10" selected>10 bps / side</option>
+      </select>
+    </div>
+
+    <button class="primary" id="reset-btn" style="background:#57606a;margin-bottom:10px;">Reset to Defaults</button>
+
+    <h2 style="margin-top: 18px;">Benchmarks</h2>
+    <div class="form-group">
+      <div class="checkbox-group" id="bench-checks"></div>
+    </div>
+
+    <button class="primary" id="run-btn">Update Results</button>
+    <div class="note" id="meta-note"></div>
+  </aside>
+
+  <section class="main">
+    <div id="loading">Loading backtest data (~11 MB, one-time)...</div>
+    <div id="results" style="display: none;">
+      <div class="panel">
+        <h3>Performance Summary</h3>
+        <table id="stats-table">
+          <thead>
+            <tr>
+              <th>Strategy</th>
+              <th class="num">Start</th>
+              <th class="num">End</th>
+              <th class="num">CAGR</th>
+              <th class="num">Vol</th>
+              <th class="num">Sharpe</th>
+              <th class="num">Sortino</th>
+              <th class="num">Max DD</th>
+              <th class="num">Avg % Invested</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Growth of $10,000 (log scale)</h3>
+        <div class="chart-wrap"><canvas id="growth-chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Rolling 5-Year CAGR</h3>
+        <div class="chart-wrap"><canvas id="rolling-cagr-chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Rolling 5-Year Sharpe</h3>
+        <div class="chart-wrap"><canvas id="rolling-sharpe-chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Rolling 5-Year Max Drawdown</h3>
+        <div class="chart-wrap"><canvas id="rolling-maxdd-chart"></canvas></div>
+      </div>
+      <div class="panel glossary">
+        <h3>About</h3>
+        <details>
+          <summary>About this tool</summary>
+          <p>This page is an interactive country-CAPE rotation backtester.
+            It lets you mix and match a CAPE basket (cheap or expensive
+            countries by Shiller P/E), an SMA trend filter, a momentum
+            filter, and a country-exclusion robustness check, then compares
+            the result to common global benchmarks. All combinations are
+            precomputed offline; selecting from the dropdowns just looks up
+            the matching run, so charts update instantly.</p>
+          <p><b>Country coverage over the backtest window.</b> The
+            investable universe grows as MSCI and Barclays/Faber add
+            countries. Approximate CAPE-eligible country counts:
+            <strong>~13 countries in 1997</strong> (start of the daily
+            post-97 sample), <strong>~25 countries by late 2011</strong>
+            (midpoint), and <strong>~43 countries by 2026</strong> (most
+            recent quarter). The 44-country figure is the cumulative max
+            across the full history.</p>
+          <p><b>Supplementing the price data for an earlier period
+            start.</b> The utilized daily MSCI IMI Net index data begins
+            1997-01-01, but the 200-day SMA and 12-month fresh-momentum
+            signals need ~12-24 months of prior history to evaluate. To
+            enable the performance period to begin alongside the index
+            data, with active trend and momentum filters, pre-1997
+            history is supplemented with MSCI Country Standard
+            (Large+Mid Cap) Gross monthly series. Each country's monthly
+            levels are scale-adjusted so the last pre-IMI value lines up
+            with the first daily IMI value, then linearly interpolated
+            onto the same business-day calendar the daily IMIs use. This
+            early supplementary data is used <em>only</em> as an input
+            to the SMA trend and momentum-filter thresholds. This allows
+            the strategy to go live on the first quarterly rebalance
+            trade date after the daily IMIs start (1997-01-15), instead
+            of waiting until a year or two later.</p>
+        </details>
+      </div>
+
+      <div class="panel glossary">
+        <h3>Glossary &amp; Terminology</h3>
+        <details>
+          <summary>Strategy terms</summary>
+          <dl>
+            <dt>CAPE</dt>
+            <dd>Cyclically Adjusted Price-to-Earnings ratio (Shiller P/E). Ratio
+              of price to a 10-year trailing average of inflation-adjusted
+              earnings. Country-level CAPE here is from Barclays / Faber
+              quarterly valuation tables.</dd>
+            <dt>Cheap / expensive CAPE basket</dt>
+            <dd>At each quarterly rebalance, countries are sorted by CAPE.
+              "Cheapest X% by CAPE" holds the bottom X% (lowest CAPE);
+              "Most expensive X% by CAPE" holds the top X%. Equal-weighted
+              within the basket.</dd>
+            <dt>SMA / trend filter</dt>
+            <dd>Two flavors are available. The 200-day SMA is computed on
+              daily prices and the rule is checked every trading day; positions
+              can flip intra-month. The 10-month SMA is computed on month-end
+              prices and checked once per month — the signal at month-end T is
+              held for all of month T+1 (classic Faber TAA mechanic), so
+              positions only flip at month boundaries and turnover is lower.
+              "Uptrend" holds a country only when price is above its SMA;
+              "downtrend" holds only when below.</dd>
+            <dt>Standard 12-mo momentum</dt>
+            <dd>Excludes any country whose trailing 12-month total return is
+              negative at the rebal date. Classic absolute-momentum rule.</dd>
+            <dt>Fresh-negative momentum (fmom 12/8, 12/12)</dt>
+            <dd>Excludes a country only when its trailing 12-month return just
+              went negative — i.e., current 12-month &lt; 0 AND the prior
+              8-month (or 12-month) window before that was &gt; 0. Targets
+              countries whose downtrend is "fresh" rather than sustained.</dd>
+            <dt>Country exclusion (top contributor)</dt>
+            <dd>Drops the country that added the most to the selected
+              strategy's gross long return over the full live period
+              (Σ<sub>t</sub> weight × daily return) and re-runs without it.
+              The country is removed before the CAPE quantile is taken, and
+              the "top contributor" is specific to each CAPE × trend × momentum
+              combination. Uses full-sample look-ahead — a fragility check,
+              not a tradable signal.</dd>
+            <dt>Quarterly rebal</dt>
+            <dd>Portfolio weights are recomputed at each CAPE quarter-end and
+              traded 10 business days later to allow for valuation data to be
+              published. Positions are held flat between rebals.</dd>
+            <dt>Non-reinvest mechanic</dt>
+            <dd>When a filter (trend or momentum) masks out a position, that
+              slice of capital earns the cash rate rather than being
+              redistributed across surviving positions. Keeps concentration
+              controlled and avoids pro-cyclical position sizing.</dd>
+            <dt>10 bps/side trading cost</dt>
+            <dd>0.10% of turnover charged at each rebalance on both buys and
+              sells. A 0 bps option is provided for frictionless comparison.</dd>
+          </dl>
+        </details>
+
+        <details>
+          <summary>Performance metrics</summary>
+          <dl>
+            <dt>CAGR</dt>
+            <dd>Compound Annual Growth Rate — the constant annual rate that
+              would produce the observed cumulative return over the sample.</dd>
+            <dt>Vol</dt>
+            <dd>Annualized standard deviation of daily returns
+              (× √252). Measure of total risk.</dd>
+            <dt>Sharpe</dt>
+            <dd>Annualized excess-return Sharpe: mean of (daily return − daily
+              cash rate) divided by the standard deviation of that excess, ×
+              √252. Higher is better.</dd>
+            <dt>Max DD</dt>
+            <dd>Maximum peak-to-trough decline of the cumulative return series
+              over the sample. Expressed as a negative percentage.</dd>
+            <dt>Avg % Invested</dt>
+            <dd>Time-mean of the daily long-leg weight (sum of country
+              weights, capped at 100%) over each series' live window. The
+              remainder earns the cash rate via the non-reinvest mechanic.
+              Equity benchmarks are always 100% invested; T-bills 0%.</dd>
+            <dt>Rolling 5-Year CAGR</dt>
+            <dd>Trailing 5-calendar-year CAGR anchored at each year-end from
+              2001 onward. Shows how the strategy's compounding experience
+              varied across different five-year slices.</dd>
+            <dt>bps (basis points)</dt>
+            <dd>One hundredth of one percent. 10 bps = 0.10%.</dd>
+          </dl>
+        </details>
+
+        <details>
+          <summary>Indices &amp; benchmarks</summary>
+          <dl>
+            <dt>Equal-Weight Country Indices</dt>
+            <dd>Equal-weighted portfolio of every CAPE-eligible country in the
+              universe at each rebalance, held until the next quarter-end.
+              Acts as the "no-signal" reference: same investable universe and
+              same quarterly rebal cadence as the CAPE strategies, but without
+              any tilt toward cheap or expensive markets. Built directly from
+              the underlying MSCI IMI Net Total Return country series.</dd>
+            <dt>All World</dt>
+            <dd>MSCI ACWI IMI Net TR (USD). Cap-weighted basket of developed
+              and emerging markets across large, mid, and small cap stocks
+              (~99% of free-float-adjusted global market cap). The headline
+              "global stocks" benchmark; heavily U.S.-weighted in recent years.</dd>
+            <dt>All Developed Markets</dt>
+            <dd>MSCI Developed IMI Net TR (USD). Cap-weighted developed-market
+              stocks across all size tiers, excluding emerging markets. Same
+              construction as All World but with EM removed.</dd>
+            <dt>All World, Ex. U.S.</dt>
+            <dd>MSCI ACWI ex USA IMI Net TR (USD). Global IMI with the U.S.
+              stripped out — closer in composition to the country-rotation
+              universe, which spends most of its time underweight or out of
+              the U.S.</dd>
+            <dt>T-bills</dt>
+            <dd>U.S. cash proxy. SPDR Bloomberg 1-3 Month T-Bill ETF
+              (ticker: BIL) total return from its 2007-05 inception onward,
+              spliced backward with a synthetic daily series built from the
+              FRED 3-month T-bill secondary-market rate (TB3MS) for 1997-01 to
+              2007-05. Also acts as the risk-free rate in the Sharpe
+              calculation.</dd>
+            <dt>Net Total Return (Net TR)</dt>
+            <dd>The MSCI return convention used here: dividends are reinvested
+              after deducting the withholding taxes a typical foreign investor
+              would pay. More conservative than gross-of-tax returns.</dd>
+            <dt>MSCI IMI</dt>
+            <dd>Investable Market Index — covers large, mid, and small cap
+              stocks (roughly 99% of free-float-adjusted market cap per
+              country). All four index benchmarks above are the IMI versions.</dd>
+          </dl>
+        </details>
+      </div>
+
+      <div class="panel glossary">
+        <h3>Data Sources</h3>
+        <details>
+          <summary>Sources &amp; coverage</summary>
+          <dl>
+            <dt>MSCI</dt>
+            <dd>Country and benchmark index history — MSCI IMI Net Total Return
+              series for the 44-country universe and the ACWI IMI / Developed
+              IMI / ACWI ex USA IMI benchmarks. Daily data from January 1997
+              onward; pre-1997 monthly history (MSCI Standard, scale-adjusted)
+              is bridged in only to populate the early SMA and momentum
+              signals. Source: <a href="https://www.msci.com" target="_blank"
+              rel="noopener">msci.com</a>.</dd>
+            <dt>Barclays (early CAPE data)</dt>
+            <dd>Quarterly country CAPE tables published in Barclays' Global
+              Equity Research notes. Provides the 1996 Q4 – 2012 Q4 portion of
+              the CAPE history used here — starting with 13 countries and
+              growing to 25 as Barclays added Emerging Markets coverage through
+              the 2000s.</dd>
+            <dt>Meb Faber / The Idea Farm (later CAPE data)</dt>
+            <dd>Quarterly country valuation newsletters compiled by Meb Faber.
+              Covers the 2013 Q1 – present portion of the CAPE history and is
+              the source for all live / forward rebalances. Source:
+              <a href="https://www.theideafarm.com" target="_blank"
+              rel="noopener">theideafarm.com</a>.</dd>
+            <dt>Cash proxy</dt>
+            <dd>BIL ETF total return from its 2007-05 inception; synthetic
+              daily series built from FRED TB3MS (3-month T-bill rate) spliced
+              back to 1997 for the pre-BIL span.</dd>
+          </dl>
+        </details>
+      </div>
+
+      <div class="panel glossary resources">
+        <h3>Resources</h3>
+        <details open>
+          <summary>Related reading</summary>
+          <ul>
+            <li><a href="https://www.mebfaber.com" target="_blank"
+              rel="noopener">mebfaber.com</a> — Meb Faber's site. Source of
+              the original Global Value / country CAPE rotation research that
+              this backtest extends.</li>
+            <li><a href="https://www.theideafarm.com" target="_blank"
+              rel="noopener">theideafarm.com</a> — The Idea Farm newsletter;
+              publishes the quarterly country valuation tables that feed the
+              post-2012 CAPE inputs here.</li>
+            <li><a
+              href="https://www.researchaffiliates.com/insights/publications/articles/637-can-momentum-investing-be-saved"
+              target="_blank" rel="noopener">Research Affiliates — "Can
+              Momentum Investing Be Saved?"</a> — Arnott et al. on the
+              fresh-negative momentum concept motivating the fmom 12/8 and
+              12/12 filters in this app.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PALETTE = [
+  "#1e3a5f", "#0a9396", "#b5651d", "#6a4c93", "#c1121f",
+  "#55a630", "#7b2cbf", "#0077b6"
+];
+
+// DATA_VERSION is auto-patched by precompute_webapp_grid.py — do not edit
+// by hand. Mirrors meta.generated_at_utc from the latest JSON build.
+const DATA_VERSION = "20260516T063855";
+
+let DATA = null;
+let growthChart = null;
+const rollingCharts = {};
+
+async function load() {
+  try {
+    // Cache-bust by JSON build version, not wall clock. Auto-patched by
+    // precompute_webapp_grid.py on every regen, so a stale browser cache
+    // is invalidated on the first visit after a new precompute.
+    const resp = await fetch("webapp_results.json?v=" + DATA_VERSION);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    DATA = await resp.json();
+  } catch (e) {
+    document.getElementById("loading").textContent =
+      "Failed to load webapp_results.json - serve this page from a local "
+      + "web server (e.g. 'python -m http.server') rather than opening the "
+      + "file directly. Error: " + e.message;
+    return;
+  }
+  initUI();
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("results").style.display = "block";
+  render();
+}
+
+const DEFAULTS = {
+  cape: "bot15", trend: "sma200_up", mom: "mom_none",
+  ex: "ex_none", cost: "10",
+};
+
+const DIM_ORDER = {
+  cape: ["bot10", "bot15", "bot25", "bot50",
+         "top50", "top25", "top15", "top10", "none"],
+  trend: ["sma200_up", "sma10m_up",
+          "sma200_down", "sma10m_down", "none"],
+  mom: ["mom_none", "mom_std12", "mom_fmom128", "mom_fmom1212"],
+  ex: ["ex_none", "ex_best"],
+};
+
+function populateSelect(id, dimKey) {
+  const labels = DATA.meta.dimension_labels[dimKey];
+  const sel = document.getElementById(id);
+  for (const key of DIM_ORDER[dimKey]) {
+    if (!(key in labels)) continue;
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = labels[key];
+    sel.appendChild(opt);
+  }
+  sel.value = DEFAULTS[dimKey];
+}
+
+function updateExclusionLabels() {
+  // Re-label the country-exclusion options based on the currently selected
+  // (cape, trend, mom). The top contributor differs per strategy --
+  // names are read from DATA.meta.contributors[cape__trend__mom].
+  const cape = document.getElementById("cape").value;
+  const trend = document.getElementById("trend").value;
+  const mom = document.getElementById("mom").value;
+  const key = `${cape}__${trend}__${mom}`;
+  const c = (DATA.meta.contributors && DATA.meta.contributors[key])
+    || { best: null };
+  const sel = document.getElementById("ex");
+  for (const opt of sel.options) {
+    if (opt.value === "ex_none") {
+      opt.textContent = "Include all eligible countries";
+    } else if (opt.value === "ex_best") {
+      opt.textContent = c.best
+        ? `Exclude ${c.best} (top contributor for this strategy)`
+        : "Exclude top contributor (n/a — strategy never holds anything)";
+    }
+  }
+}
+
+function initUI() {
+  populateSelect("cape",  "cape");
+  populateSelect("trend", "trend");
+  populateSelect("mom",   "mom");
+  populateSelect("ex",    "ex");
+  updateExclusionLabels();
+  document.getElementById("cost").value = DEFAULTS.cost;
+
+  const benchBox = document.getElementById("bench-checks");
+  const benchDefaults = { ew44: true, acwi_imi: true, dev_imi: false,
+                          acwi_ex_us: false, cash: false };
+  for (const [key, block] of Object.entries(DATA.benchmarks)) {
+    const lbl = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.value = key;
+    cb.checked = !!benchDefaults[key];
+    lbl.appendChild(cb);
+    const txt = document.createElement("span");
+    txt.textContent = block.label;
+    lbl.appendChild(txt);
+    benchBox.appendChild(lbl);
+  }
+
+  ["cape", "trend", "mom", "ex", "cost"].forEach(id => {
+    document.getElementById(id).addEventListener("change", render);
+  });
+  // The top/bottom contributor changes with cape/trend/mom -- relabel the
+  // exclusion dropdown when those change so the user sees the right country.
+  ["cape", "trend", "mom"].forEach(id => {
+    document.getElementById(id).addEventListener("change", updateExclusionLabels);
+  });
+  benchBox.addEventListener("change", render);
+  document.getElementById("run-btn").addEventListener("click", render);
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    for (const [k, v] of Object.entries(DEFAULTS)) {
+      document.getElementById(k).value = v;
+    }
+    updateExclusionLabels();
+    render();
+  });
+
+  const m = DATA.meta;
+  document.getElementById("meta-note").innerHTML =
+    `<b>${m.universe_count} countries</b>, ${m.start_date} to ${m.end_date}. ` +
+    `Quarterly rebal lagged 10 bdays after CAPE quarter-end. ` +
+    `Non-reinvest: idle capital earns the cash rate ` +
+    `(BIL post-2007-05; synthetic TB3MS level pre-2007). ` +
+    `All stats computed on daily returns. ` +
+    `Defaults match the paper's locked-in baseline.`;
+}
+
+function findRun(cape, trend, cost, ex, mom) {
+  const id = `${cape}__${trend}__cost${cost}__${ex}__${mom}`;
+  return DATA.runs.find(r => r.id === id);
+}
+
+const SHORT = {
+  cape: {
+    bot10: "Cheap 10% CAPE", bot15: "Cheap 15% CAPE",
+    bot25: "Cheap 25% CAPE", bot50: "Cheap 50% CAPE",
+    top10: "Expensive 10% CAPE", top15: "Expensive 15% CAPE",
+    top25: "Expensive 25% CAPE", top50: "Expensive 50% CAPE",
+    none: "Full universe EW",
+  },
+  trend: {
+    sma200_up: "200d up", sma10m_up: "10m up",
+    sma200_down: "200d down", sma10m_down: "10m down",
+    none: null,
+  },
+  mom: {
+    mom_none: null, mom_std12: "12mo abs mom",
+    mom_fmom128: "fmom 12/8", mom_fmom1212: "fmom 12/12",
+  },
+  ex: {
+    ex_none: null, ex_best: "ex best",
+  },
+};
+
+function shortLabel(params) {
+  const parts = [SHORT.cape[params.cape]];
+  for (const k of ["trend", "mom", "ex"]) {
+    if (SHORT[k][params[k]]) parts.push(SHORT[k][params[k]]);
+  }
+  parts.push(`${params.cost} bps`);
+  return parts.join(" · ");
+}
+
+function toGrowth(monthly) {
+  let v = 10000;
+  let seen = false;
+  return monthly.map(r => {
+    if (r === null) return null;
+    if (!seen) { seen = true; return v; }
+    v *= (1 + r);
+    return v;
+  });
+}
+
+function fmtPct(x, dec = 2) {
+  if (x == null || isNaN(x)) return "-";
+  return (x * 100).toFixed(dec) + "%";
+}
+function fmtPctSigned(x) {
+  if (x == null || isNaN(x)) return "-";
+  const cls = x >= 0 ? "pos" : "neg";
+  return `<span class="${cls}">${(x * 100).toFixed(2)}%</span>`;
+}
+function fmtNum(x, dec = 2) {
+  if (x == null || isNaN(x)) return "-";
+  return x.toFixed(dec);
+}
+
+function render() {
+  const params = {
+    cape:  document.getElementById("cape").value,
+    trend: document.getElementById("trend").value,
+    mom:   document.getElementById("mom").value,
+    ex:    document.getElementById("ex").value,
+    cost:  document.getElementById("cost").value,
+  };
+  const selectedBenches = Array.from(
+    document.querySelectorAll("#bench-checks input:checked")
+  ).map(cb => cb.value);
+
+  const stratRun = findRun(params.cape, params.trend, params.cost,
+                           params.ex, params.mom);
+  if (!stratRun) {
+    alert("Run not found for selection: " + JSON.stringify(params));
+    return;
+  }
+
+  const series = [];
+  series.push({
+    label: shortLabel(params),
+    monthly: stratRun.monthly,
+    stats: stratRun.stats,
+    rolling: stratRun.rolling_5yr,
+    color: PALETTE[0],
+    isStrategy: true,
+  });
+  selectedBenches.forEach((bk, i) => {
+    const b = DATA.benchmarks[bk];
+    series.push({
+      label: b.label,
+      monthly: b.monthly,
+      stats: b.stats,
+      rolling: b.rolling_5yr,
+      color: PALETTE[i + 1],
+    });
+  });
+
+  renderTable(series);
+  renderGrowth(series);
+  renderRolling(series, "cagr",   "rolling-cagr-chart",
+                "Trailing 5-yr CAGR",      {mul: 100, suffix: "%", dec: 2});
+  renderRolling(series, "sharpe", "rolling-sharpe-chart",
+                "Trailing 5-yr Sharpe",    {mul: 1,   suffix: "",  dec: 2});
+  renderRolling(series, "max_dd", "rolling-maxdd-chart",
+                "Trailing 5-yr Max DD",    {mul: 100, suffix: "%", dec: 2});
+}
+
+function renderTable(series) {
+  const tb = document.querySelector("#stats-table tbody");
+  tb.innerHTML = "";
+  const months = DATA.dates.monthly;
+  const metaStart = DATA.meta.start_date;
+  const metaEnd = DATA.meta.end_date;
+  for (const s of series) {
+    let firstIdx = s.monthly.findIndex(v => v !== null);
+    let lastIdx = s.monthly.length - 1;
+    while (lastIdx >= 0 && s.monthly[lastIdx] === null) lastIdx--;
+    const startCell = firstIdx === 0 ? metaStart
+      : (firstIdx > 0 ? months[firstIdx] : "-");
+    const endCell = lastIdx === s.monthly.length - 1 ? metaEnd
+      : (lastIdx >= 0 ? months[lastIdx] : "-");
+    const tr = document.createElement("tr");
+    tr.className = "strategy-row";
+    tr.innerHTML = `
+      <td class="strategy-cell"><span class="legend-dot" style="background:${s.color}"></span><span class="strategy-name">${s.label}</span></td>
+      <td class="num">${startCell}</td>
+      <td class="num">${endCell}</td>
+      <td class="num">${fmtPct(s.stats.cagr)}</td>
+      <td class="num">${fmtPct(s.stats.vol)}</td>
+      <td class="num">${fmtNum(s.stats.sharpe)}</td>
+      <td class="num">${fmtNum(s.stats.sortino)}</td>
+      <td class="num">${fmtPctSigned(s.stats.max_dd)}</td>
+      <td class="num">${fmtPct(s.stats.avg_long)}</td>
+    `;
+    tb.appendChild(tr);
+  }
+}
+
+function renderGrowth(series) {
+  const labels = DATA.dates.monthly;
+  const datasets = series.map(s => ({
+    label: s.label,
+    data: toGrowth(s.monthly),
+    borderColor: s.color,
+    backgroundColor: s.color,
+    borderWidth: s.isStrategy ? 2 : 1.3,
+    pointRadius: 0,
+    tension: 0,
+    spanGaps: true,
+  }));
+  const ctx = document.getElementById("growth-chart").getContext("2d");
+  if (growthChart) growthChart.destroy();
+  growthChart = new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom",
+          labels: { boxWidth: 14, boxHeight: 10, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: $${
+              ctx.parsed.y == null ? "-" :
+              Math.round(ctx.parsed.y).toLocaleString()
+            }`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { autoSkip: true, maxTicksLimit: 14, font: { size: 11 } } },
+        y: {
+          type: "logarithmic",
+          ticks: {
+            callback: v => "$" + v.toLocaleString(),
+            font: { size: 11 }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderRolling(series, metric, canvasId, yLabel, fmt) {
+  const anchors = DATA.dates.rolling_anchors;
+  const datasets = series.map(s => {
+    const byYear = {};
+    (s.rolling || []).forEach(r => { byYear[r.anchor_year] = r[metric]; });
+    return {
+      label: s.label,
+      data: anchors.map(y => byYear[y] == null ? null : byYear[y] * fmt.mul),
+      borderColor: s.color,
+      backgroundColor: s.color,
+      borderWidth: s.isStrategy ? 2 : 1.3,
+      pointRadius: 2,
+      tension: 0,
+      spanGaps: true,
+    };
+  });
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  if (rollingCharts[canvasId]) rollingCharts[canvasId].destroy();
+  rollingCharts[canvasId] = new Chart(ctx, {
+    type: "line",
+    data: { labels: anchors, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom",
+          labels: { boxWidth: 14, boxHeight: 10, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${
+              ctx.parsed.y == null ? "-"
+                : ctx.parsed.y.toFixed(fmt.dec) + fmt.suffix
+            }`
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: "5-year window end-year" },
+             ticks: { font: { size: 11 } } },
+        y: { title: { display: true, text: yLabel },
+             ticks: { callback: v => v + fmt.suffix, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+load();
+</script>
+</body>
+</html>
