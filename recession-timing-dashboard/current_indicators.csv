@@ -1,0 +1,7 @@
+key,name,rule,signal_score,latest_raw_value,current_threshold,data_through,available_date,next_update,latest_value,tripped,score_contribution,status_text,status_class,source_url
+unemployment,Unemployment Rate Trend,Rate above its 12-month average,2.0,4.3,4.316666666666666,2026-04-01,2026-05-08,2026-06-05,-0.016666666666666607,False,0.0,Clear,good,https://fred.stlouisfed.org/series/UNRATE
+retail_sales,Real Retail Sales Growth,YoY growth below 0%,1.0,226055.71336511365,0.0,2026-04-01,2026-05-14,2026-06-17,0.010542101853741714,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3asR
+industrial_production,Industrial Production Growth,YoY growth below 0%,1.0,101.7898,0.0,2026-03-01,2026-04-16,2026-06-15,0.007416835246099485,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3atC
+employment,Employment Growth,Labor-force-adjusted YoY growth below 0%,0.0,0.9337686402541251,0.0,2026-04-01,2026-05-08,2026-06-05,0.00814725851180298,False,0.0,Not used,neutral,https://fred.stlouisfed.org/graph/?g=3au3
+real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20595.111,0.03,2026-03-01,2026-04-30,2026-05-28,0.002335265541734133,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
+housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.008830774838758987,-0.1,2026-03-01,2026-05-08,2026-05-21,0.11177174208024665,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
