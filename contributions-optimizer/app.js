@@ -928,6 +928,7 @@ function escapeHtml(value) {
 
 function renderResults() {
   const table = document.getElementById("results-table");
+  const cards = document.getElementById("results-cards");
   const topAccount = document.getElementById("top-account");
   const footnotes = document.getElementById("footnotes");
 
@@ -976,6 +977,40 @@ function renderResults() {
     )).join("");
 
     table.innerHTML = `${header}<tbody>${body}</tbody>`;
+    cards.innerHTML = results.map((row) => {
+      const unavailable = row.futureValueAfterTax === null;
+      const accountLabel = row.account === "Traditional IRA" && hasTraditionalFootnote
+        ? "Traditional IRA<sup>1</sup>"
+        : escapeHtml(row.account);
+      const cardClass = unavailable ? "result-card unavailable-card" : "result-card";
+      return `
+        <article class="${cardClass}">
+          <div class="card-rank">
+            <span>Rank ${row.rank}</span>
+            <strong>${accountLabel}</strong>
+          </div>
+          <div class="card-value">
+            <span>Available after withdrawal</span>
+            <strong>${formatMoney(row.futureValueAfterTax)}</strong>
+          </div>
+          <dl class="mobile-metrics">
+            <div><dt>Pretax contribution today</dt><dd>${formatMoney(row.pretaxIncomeContributionToday)}</dd></div>
+            <div><dt>Post-tax contribution today</dt><dd>${formatMoney(row.postTaxContributionToday)}</dd></div>
+            <div><dt>Contribution tax rate</dt><dd>${formatPercent(row.contributionEffectiveTaxRate)}</dd></div>
+            <div><dt>Future value before tax</dt><dd>${formatMoney(row.futureValueBeforeTax)}</dd></div>
+            <div><dt>Tax due at withdrawal</dt><dd>${formatMoney(row.taxDueAtWithdrawal)}</dd></div>
+            <div><dt>Withdrawal tax rate</dt><dd>${formatPercent(row.withdrawalEffectiveTaxRate)}</dd></div>
+            <div><dt>Fees and tax impact</dt><dd>${formatMoney(row.totalFeesAndTaxImpact)}</dd></div>
+            <div><dt>Net annualized growth</dt><dd>${formatPercent(row.netAnnualizedGrowthPct)}</dd></div>
+          </dl>
+          <details class="card-details">
+            <summary>Assumptions and eligibility</summary>
+            <p>${escapeHtml(row.eligibilityNote)}</p>
+            <p>${escapeHtml(row.assumptions)}</p>
+          </details>
+        </article>
+      `;
+    }).join("");
     const best = results.find((row) => row.futureValueAfterTax !== null);
     topAccount.textContent = best ? `${best.account}: ${formatMoney(best.futureValueAfterTax)}` : "No available account";
     footnotes.innerHTML = hasTraditionalFootnote
@@ -983,6 +1018,7 @@ function renderResults() {
       : "";
   } catch (error) {
     table.innerHTML = `<tbody><tr><td>Error</td><td>${escapeHtml(error.message)}</td></tr></tbody>`;
+    cards.innerHTML = `<article class="result-card"><strong>Error</strong><p>${escapeHtml(error.message)}</p></article>`;
     topAccount.textContent = "Check inputs";
     footnotes.innerHTML = "";
   }
