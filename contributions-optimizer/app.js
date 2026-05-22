@@ -577,17 +577,42 @@ function incomeTaxSavingsFromDeduction({ currentIncome, deduction, state, filing
   return Math.max(0, before - after);
 }
 
-function hsaPayrollTaxSavings({ wageIncomeBeforeContribution, contribution, filingStatus }) {
+function clampPercent(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(1, Math.max(0, parsed));
+}
+
+function individualSocialSecuritySavings(wageIncomeBeforeContribution, contribution) {
   const wageIncomeAfterContribution = Math.max(0, wageIncomeBeforeContribution - contribution);
   const socialSecurityBefore = Math.min(wageIncomeBeforeContribution, SOCIAL_SECURITY_WAGE_BASE_2026);
   const socialSecurityAfter = Math.min(wageIncomeAfterContribution, SOCIAL_SECURITY_WAGE_BASE_2026);
-  const socialSecuritySavings = (socialSecurityBefore - socialSecurityAfter) * EMPLOYEE_SOCIAL_SECURITY_RATE;
-  const medicareSavings = contribution * EMPLOYEE_MEDICARE_RATE;
+  return (socialSecurityBefore - socialSecurityAfter) * EMPLOYEE_SOCIAL_SECURITY_RATE;
+}
+
+function hsaPayrollTaxSavings({
+  wageIncomeBeforeContribution,
+  contribution,
+  filingStatus,
+  primaryEarnerShare = 1,
+}) {
+  const householdIncome = Math.max(0, wageIncomeBeforeContribution);
+  const householdContribution = Math.max(0, contribution);
+  const householdShare = filingStatus === "married_filing_jointly"
+    ? clampPercent(primaryEarnerShare, 0.5)
+    : 1;
+  const primaryIncome = householdIncome * householdShare;
+  const spouseIncome = householdIncome - primaryIncome;
+  const primaryContribution = householdContribution * householdShare;
+  const spouseContribution = householdContribution - primaryContribution;
+  const socialSecuritySavings = individualSocialSecuritySavings(primaryIncome, primaryContribution)
+    + individualSocialSecuritySavings(spouseIncome, spouseContribution);
+  const medicareSavings = householdContribution * EMPLOYEE_MEDICARE_RATE;
   const additionalMedicareThreshold = ADDITIONAL_MEDICARE_THRESHOLDS[filingStatus];
   let additionalMedicareSavings = 0;
   if (additionalMedicareThreshold !== undefined) {
-    const additionalBefore = Math.max(0, wageIncomeBeforeContribution - additionalMedicareThreshold);
-    const additionalAfter = Math.max(0, wageIncomeAfterContribution - additionalMedicareThreshold);
+    const additionalBefore = Math.max(0, householdIncome - additionalMedicareThreshold);
+    const additionalAfter = Math.max(0, householdIncome - householdContribution - additionalMedicareThreshold);
     additionalMedicareSavings = (additionalBefore - additionalAfter) * ADDITIONAL_MEDICARE_RATE;
   }
   return Math.max(0, socialSecuritySavings + medicareSavings + additionalMedicareSavings);
@@ -633,6 +658,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     wageIncomeBeforeContribution: inputs.currentIncome,
     contribution: inputs.pretaxBudget,
     filingStatus: inputs.filingStatus,
+    primaryEarnerShare: inputs.primaryEarnerShare,
   });
   const afterTaxBudget = Math.max(0, inputs.pretaxBudget - currentIncomeTaxOnBudget - payrollTaxOnBudget);
   const payrollTaxRateOnBudget = inputs.pretaxBudget ? payrollTaxOnBudget / inputs.pretaxBudget : 0;
@@ -895,6 +921,7 @@ function getInputs() {
     currentAge: Math.max(0, Math.trunc(valueFromNumber("current-age"))),
     withdrawalAge: Math.max(0, Math.trunc(valueFromNumber("withdrawal-age"))),
     pretaxBudget: valueFromNumber("pretax-budget"),
+    primaryEarnerShare: valueFromNumber("primary-earner-share") / 100,
     annualReturn: valueFromNumber("annual-return") / 100,
     retirementAccountExpense: valueFromNumber("base-expense") / 100,
     employerPlanExtraExpense: valueFromNumber("extra-401k-expense") / 100,
