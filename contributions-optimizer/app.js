@@ -38,6 +38,13 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+const moneyCentsFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 function parseNumber(value) {
   if (value === undefined || value === null || value === "") return null;
   const parsed = Number(value);
@@ -717,6 +724,37 @@ function solveTaxableBrokerageWithdrawalForNet({
   return [accountValue, tax, taxableGain, baselineIncome];
 }
 
+function solvePretaxIncomeForAfterTaxIncome({
+  requiredAfterTaxIncome,
+  longTermCapitalGainsShare = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  const target = Math.max(0, requiredAfterTaxIncome || 0);
+  if (target <= 0) return 0;
+
+  const afterTaxAt = (income) => afterTaxIncomeWithSplit({
+    income,
+    ltcgShare: longTermCapitalGainsShare,
+    state,
+    filingStatus,
+    dependents,
+  });
+
+  let low = 0;
+  let high = Math.max(target * 2, 1);
+  while (afterTaxAt(high) < target) {
+    high *= 2;
+  }
+  for (let index = 0; index < 60; index += 1) {
+    const mid = (low + high) / 2;
+    if (afterTaxAt(mid) < target) low = mid;
+    else high = mid;
+  }
+  return high;
+}
+
 function phaseoutFraction(income, lower, upper) {
   if (income <= lower) return 1;
   if (income >= upper) return 0;
@@ -871,10 +909,6 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const payrollTaxRateOnBudget = inputs.pretaxBudget ? payrollTaxOnBudget / inputs.pretaxBudget : 0;
   const taxableContributionLowRate = contributionIncomeLowRate + payrollTaxRateOnBudget;
   const taxableContributionHighRate = contributionIncomeHighRate + payrollTaxRateOnBudget;
-  const stateConformityFootnote = {
-    severity: "info",
-    text: "State-specific account conformity rules are not separately modeled.",
-  };
   const rothEarlyWithdrawalFootnote = {
     severity: "warning",
     text: "Planned withdrawal age is before 59 1/2, so qualified Roth withdrawal treatment may not be available.",
@@ -923,7 +957,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
 
   const rothIraContribution = afterTaxBudget;
   const rothIraFv = futureValue(rothIraContribution, years, inputs.annualReturn, inputs.retirementAccountExpense);
-  const rothIraFootnotes = [stateConformityFootnote, ...rothWithdrawalFootnotes];
+  const rothIraFootnotes = [...rothWithdrawalFootnotes];
   if (rothIraFraction === 0) {
     rothIraFootnotes.push({
       severity: "unavailable",
@@ -984,7 +1018,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   if (nondeductibleBasis > 0) tradIraRates[0] = 0;
-  const tradIraFootnotes = [stateConformityFootnote];
+  const tradIraFootnotes = [];
   if (iraDeductionFraction < 1) {
     tradIraFootnotes.push({
       severity: "warning",
@@ -1017,7 +1051,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     inputs.annualReturn,
     inputs.retirementAccountExpense + inputs.employerPlanExtraExpense,
   );
-  const roth401kFootnotes = [stateConformityFootnote, ...rothWithdrawalFootnotes, ...payrollContributionFootnotes];
+  const roth401kFootnotes = [...rothWithdrawalFootnotes, ...payrollContributionFootnotes];
   if (!inputs.has401k) {
     roth401kFootnotes.push({
       severity: "unavailable",
@@ -1065,7 +1099,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
-  const trad401kFootnotes = [stateConformityFootnote, ...payrollContributionFootnotes];
+  const trad401kFootnotes = [...payrollContributionFootnotes];
   if (!inputs.has401k) {
     trad401kFootnotes.push({
       severity: "unavailable",
@@ -1117,7 +1151,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   const hsaContributionRate = inputs.hsaPayrollContribution ? 0 : payrollTaxRateOnBudget;
-  const hsaFootnotes = [stateConformityFootnote, ...payrollContributionFootnotes];
+  const hsaFootnotes = [...payrollContributionFootnotes];
   if (!inputs.hasHsa) {
     hsaFootnotes.push({
       severity: "unavailable",
@@ -1248,6 +1282,11 @@ function formatMoney(value) {
   return moneyFormatter.format(value);
 }
 
+function formatMoneyCents(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "Not available";
+  return moneyCentsFormatter.format(value);
+}
+
 function formatPercent(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "Not available";
   return `${(value * 100).toFixed(2)}%`;
@@ -1296,6 +1335,19 @@ function accountCellClass(row, cellClass = "", unavailable = false) {
   ].filter(Boolean).join(" ");
 }
 
+function updateRetirementPretaxEquivalent(inputs) {
+  const output = document.getElementById("retirement-pretax-equivalent");
+  if (!output) return;
+  const pretaxIncome = solvePretaxIncomeForAfterTaxIncome({
+    requiredAfterTaxIncome: inputs.retirementIncome,
+    longTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
+    state: inputs.retirementState,
+    filingStatus: inputs.filingStatus,
+    dependents: inputs.dependents,
+  });
+  output.textContent = `(${formatMoneyCents(pretaxIncome)} pretax)`;
+}
+
 function renderResults() {
   syncRangeOutputs();
   const table = document.getElementById("results-table");
@@ -1304,7 +1356,9 @@ function renderResults() {
   const footnotes = document.getElementById("footnotes");
 
   try {
-    const results = optimizeIncrementalRetirementDollar(getInputs());
+    const inputs = getInputs();
+    updateRetirementPretaxEquivalent(inputs);
+    const results = optimizeIncrementalRetirementDollar(inputs);
     const footnoteEntries = prepareFootnotes(results);
 
     const metrics = [

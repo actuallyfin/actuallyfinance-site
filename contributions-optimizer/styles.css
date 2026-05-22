@@ -8,8 +8,8 @@
   --accent: #0f766e;
   --accent-dark: #115e59;
   --accent-soft: #e4f2ef;
-  --warning: #9a4f12;
-  --warning-soft: #f8e2ce;
+  --warning: #9b6a38;
+  --warning-soft: #fbefe1;
   --unavailable-text: #8f9aa6;
   --unavailable-soft: #f2f4f6;
   --warn-soft: #fff4d9;
@@ -139,6 +139,13 @@ label span {
   font-weight: 650;
 }
 
+.input-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
 input,
 select {
   width: 100%;
@@ -239,23 +246,23 @@ input[type="range"]:focus-visible {
 
 .priority-notice {
   display: grid;
-  gap: 4px;
-  margin-bottom: 12px;
-  border: 1px solid #e2b56d;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: #5d3510;
-  background: #fff5df;
+  gap: 3px;
+  margin-bottom: 10px;
+  border: 1px solid #ecd7bc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #725439;
+  background: #fff9ef;
 }
 
 .priority-notice strong {
-  color: #7c3f0b;
-  font-size: 0.9rem;
+  color: #82542a;
+  font-size: 0.8rem;
 }
 
 .priority-notice span {
-  font-size: 0.84rem;
-  line-height: 1.35;
+  font-size: 0.76rem;
+  line-height: 1.3;
 }
 
 .table-wrap {
@@ -289,7 +296,6 @@ th {
 }
 
 th.account-warning-header {
-  background: var(--warning-soft);
   color: var(--warning);
 }
 
