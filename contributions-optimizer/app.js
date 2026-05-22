@@ -24,6 +24,11 @@ const ADDITIONAL_MEDICARE_THRESHOLDS = {
   single: 200000,
   married_filing_jointly: 250000,
 };
+const NIIT_RATE = 0.038;
+const NIIT_THRESHOLDS = {
+  single: 200000,
+  married_filing_jointly: 250000,
+};
 
 let taxRows = [];
 
@@ -261,6 +266,7 @@ function calculateEffectiveIncomeTaxRate({
   filingStatus,
   dependents = 0,
   longTermCapitalGainsPercent = 0,
+  longTermCapitalGainsIncome = null,
 }) {
   if (!SUPPORTED_FILING_STATUSES[filingStatus]) throw new Error(`Unsupported filing status: ${filingStatus}`);
   if (grossIncome < 0) throw new Error("Gross income cannot be negative.");
@@ -268,12 +274,14 @@ function calculateEffectiveIncomeTaxRate({
   const stateRows = taxRows.filter((row) => row.tax_type === "state_ordinary_income" && row.jurisdiction === state);
   if (!stateRows.length) throw new Error(`State not found in tax data: ${state}`);
   const stateCode = stateRows[0].jurisdiction_code;
-  const longTermCapitalGainsIncome = grossIncome * Math.min(1, Math.max(0, longTermCapitalGainsPercent));
-  const ordinaryIncome = grossIncome - longTermCapitalGainsIncome;
+  const modeledLongTermCapitalGainsIncome = longTermCapitalGainsIncome === null
+    ? grossIncome * Math.min(1, Math.max(0, longTermCapitalGainsPercent))
+    : Math.min(grossIncome, Math.max(0, longTermCapitalGainsIncome));
+  const ordinaryIncome = grossIncome - modeledLongTermCapitalGainsIncome;
   const federal = calculateFederalIncomeTax({
     filingStatus,
     grossIncome,
-    longTermCapitalGainsIncome,
+    longTermCapitalGainsIncome: modeledLongTermCapitalGainsIncome,
     dependents,
   });
   const stateTax = calculateJurisdictionTax({
@@ -291,52 +299,101 @@ function calculateEffectiveIncomeTaxRate({
   let stateCapitalGainsTax = null;
   let stateCapitalGainsTaxAmount = 0;
 
-  if (longTermCapitalGainsIncome > 0 && stateCapitalGainsRows.length) {
+  if (modeledLongTermCapitalGainsIncome > 0 && stateCapitalGainsRows.length) {
     stateCapitalGainsTax = calculateJurisdictionTax({
       jurisdictionCode: stateCode,
       taxType: "state_capital_gains",
       filingStatus,
-      grossIncome: longTermCapitalGainsIncome,
+      grossIncome: modeledLongTermCapitalGainsIncome,
       dependents: 0,
     });
     stateCapitalGainsTaxAmount = stateCapitalGainsTax.tax;
   }
 
-  const totalTax = federal.tax + stateTax.tax + stateCapitalGainsTaxAmount;
+  const niitThreshold = NIIT_THRESHOLDS[filingStatus];
+  const niitTaxableAmount = niitThreshold === undefined
+    ? 0
+    : Math.min(modeledLongTermCapitalGainsIncome, Math.max(0, grossIncome - niitThreshold));
+  const niitTax = niitTaxableAmount * NIIT_RATE;
+  const totalTax = federal.tax + stateTax.tax + stateCapitalGainsTaxAmount + niitTax;
   return {
     grossIncome,
     ordinaryIncome,
-    longTermCapitalGainsIncome,
-    longTermCapitalGainsPercent,
+    longTermCapitalGainsIncome: modeledLongTermCapitalGainsIncome,
+    longTermCapitalGainsPercent: grossIncome > 0 ? modeledLongTermCapitalGainsIncome / grossIncome : 0,
     filingStatus,
     state,
     dependents,
     federal,
     stateTax,
     stateCapitalGainsTax,
+    niitTax,
+    niitTaxableAmount,
     totalTax,
     combinedEffectiveRate: grossIncome > 0 ? totalTax / grossIncome : 0,
     combinedMarginalRate: federal.marginalRate + stateTax.marginalRate,
   };
 }
 
+function splitIncomeByLtcgShare(income, ltcgShare) {
+  const total = Math.max(0, income || 0);
+  const share = clampPercent(ltcgShare, 0);
+  const longTermCapitalGainsIncome = total * share;
+  return {
+    ordinaryIncome: total - longTermCapitalGainsIncome,
+    longTermCapitalGainsIncome,
+  };
+}
+
 function totalIncomeTax({ income, state, filingStatus, dependents, longTermCapitalGainsIncome = 0 }) {
   if (income <= 0) return 0;
-  const ltcgPercent = income ? longTermCapitalGainsIncome / income : 0;
   return calculateEffectiveIncomeTaxRate({
     grossIncome: income,
     state,
     filingStatus,
     dependents,
-    longTermCapitalGainsPercent: ltcgPercent,
+    longTermCapitalGainsIncome,
   }).totalTax;
 }
 
-function incrementalOrdinaryTax({ baselineIncome, additionalOrdinaryIncome, state, filingStatus, dependents }) {
-  if (additionalOrdinaryIncome <= 0) return 0;
-  const baseTax = totalIncomeTax({ income: baselineIncome, state, filingStatus, dependents });
-  const fullTax = totalIncomeTax({
-    income: baselineIncome + additionalOrdinaryIncome,
+function totalIncomeTaxForComponents({
+  ordinaryIncome,
+  longTermCapitalGainsIncome = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  const ordinary = Math.max(0, ordinaryIncome || 0);
+  const ltcg = Math.max(0, longTermCapitalGainsIncome || 0);
+  return totalIncomeTax({
+    income: ordinary + ltcg,
+    state,
+    filingStatus,
+    dependents,
+    longTermCapitalGainsIncome: ltcg,
+  });
+}
+
+function taxImpactForKnownIncome({
+  baselineOrdinaryIncome,
+  baselineLongTermCapitalGainsIncome = 0,
+  additionalOrdinaryIncome = 0,
+  additionalLongTermCapitalGainsIncome = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  if (additionalOrdinaryIncome <= 0 && additionalLongTermCapitalGainsIncome <= 0) return 0;
+  const baseTax = totalIncomeTaxForComponents({
+    ordinaryIncome: baselineOrdinaryIncome,
+    longTermCapitalGainsIncome: baselineLongTermCapitalGainsIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
+  const fullTax = totalIncomeTaxForComponents({
+    ordinaryIncome: baselineOrdinaryIncome + additionalOrdinaryIncome,
+    longTermCapitalGainsIncome: baselineLongTermCapitalGainsIncome + additionalLongTermCapitalGainsIncome,
     state,
     filingStatus,
     dependents,
@@ -344,58 +401,198 @@ function incrementalOrdinaryTax({ baselineIncome, additionalOrdinaryIncome, stat
   return Math.max(0, fullTax - baseTax);
 }
 
-function ordinarySliceLowHighRates({ baselineIncome, additionalOrdinaryIncome, state, filingStatus, dependents }) {
+function incrementalOrdinaryTax({
+  baselineIncome,
+  baselineLongTermCapitalGainsShare = 0,
+  additionalOrdinaryIncome,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  if (additionalOrdinaryIncome <= 0) return 0;
+  const baseline = splitIncomeByLtcgShare(baselineIncome, baselineLongTermCapitalGainsShare);
+  return taxImpactForKnownIncome({
+    baselineOrdinaryIncome: baseline.ordinaryIncome,
+    baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
+    additionalOrdinaryIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
+}
+
+function incrementalOrdinaryTaxFromComponents({
+  baselineOrdinaryIncome,
+  baselineLongTermCapitalGainsIncome = 0,
+  additionalOrdinaryIncome,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  if (additionalOrdinaryIncome <= 0) return 0;
+  return taxImpactForKnownIncome({
+    baselineOrdinaryIncome,
+    baselineLongTermCapitalGainsIncome,
+    additionalOrdinaryIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
+}
+
+function ordinarySliceLowHighRates({
+  baselineIncome,
+  baselineLongTermCapitalGainsShare = 0,
+  additionalOrdinaryIncome,
+  state,
+  filingStatus,
+  dependents,
+}) {
   if (additionalOrdinaryIncome <= 0) return [0, 0];
   const lowIncrement = Math.min(1, additionalOrdinaryIncome);
   const highIncrement = Math.min(1, additionalOrdinaryIncome);
   const lowTax = incrementalOrdinaryTax({
     baselineIncome,
+    baselineLongTermCapitalGainsShare,
     additionalOrdinaryIncome: lowIncrement,
     state,
     filingStatus,
     dependents,
   });
-  const highTax = incrementalOrdinaryTax({
-    baselineIncome: baselineIncome + additionalOrdinaryIncome - highIncrement,
-    additionalOrdinaryIncome: highIncrement,
+  const fullTax = incrementalOrdinaryTax({
+    baselineIncome,
+    baselineLongTermCapitalGainsShare,
+    additionalOrdinaryIncome,
     state,
     filingStatus,
     dependents,
   });
-  return [Math.max(0, lowTax / lowIncrement), Math.max(0, highTax / highIncrement)];
+  const beforeHighTax = incrementalOrdinaryTax({
+    baselineIncome,
+    baselineLongTermCapitalGainsShare,
+    additionalOrdinaryIncome: additionalOrdinaryIncome - highIncrement,
+    state,
+    filingStatus,
+    dependents,
+  });
+  return [Math.max(0, lowTax / lowIncrement), Math.max(0, (fullTax - beforeHighTax) / highIncrement)];
 }
 
-function afterTaxOrdinaryIncome({ income, state, filingStatus, dependents }) {
-  const tax = totalIncomeTax({ income, state, filingStatus, dependents });
-  return Math.max(0, income - tax);
-}
-
-function solveBaselineForOrdinaryWithdrawal({
-  grossWithdrawal,
-  requiredAfterTaxIncome,
+function ordinarySliceLowHighRatesFromComponents({
+  baselineOrdinaryIncome,
+  baselineLongTermCapitalGainsIncome = 0,
+  additionalOrdinaryIncome,
   state,
   filingStatus,
   dependents,
 }) {
-  if (grossWithdrawal <= 0) return [0, 0];
+  if (additionalOrdinaryIncome <= 0) return [0, 0];
+  const lowIncrement = Math.min(1, additionalOrdinaryIncome);
+  const highIncrement = Math.min(1, additionalOrdinaryIncome);
+  const lowTax = incrementalOrdinaryTaxFromComponents({
+    baselineOrdinaryIncome,
+    baselineLongTermCapitalGainsIncome,
+    additionalOrdinaryIncome: lowIncrement,
+    state,
+    filingStatus,
+    dependents,
+  });
+  const fullTax = incrementalOrdinaryTaxFromComponents({
+    baselineOrdinaryIncome,
+    baselineLongTermCapitalGainsIncome,
+    additionalOrdinaryIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
+  const beforeHighTax = incrementalOrdinaryTaxFromComponents({
+    baselineOrdinaryIncome,
+    baselineLongTermCapitalGainsIncome,
+    additionalOrdinaryIncome: additionalOrdinaryIncome - highIncrement,
+    state,
+    filingStatus,
+    dependents,
+  });
+  return [Math.max(0, lowTax / lowIncrement), Math.max(0, (fullTax - beforeHighTax) / highIncrement)];
+}
 
-  const netIncomeWithWithdrawal = (baselineIncome) => {
-    const withdrawalTax = incrementalOrdinaryTax({
-      baselineIncome,
-      additionalOrdinaryIncome: grossWithdrawal,
+function afterTaxIncomeForComponents({
+  ordinaryIncome,
+  longTermCapitalGainsIncome = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  const ordinary = Math.max(0, ordinaryIncome || 0);
+  const ltcg = Math.max(0, longTermCapitalGainsIncome || 0);
+  const tax = totalIncomeTaxForComponents({
+    ordinaryIncome: ordinary,
+    longTermCapitalGainsIncome: ltcg,
+    state,
+    filingStatus,
+    dependents,
+  });
+  return Math.max(0, ordinary + ltcg - tax);
+}
+
+function afterTaxIncomeWithSplit({
+  income,
+  ltcgShare = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  const split = splitIncomeByLtcgShare(income, ltcgShare);
+  return afterTaxIncomeForComponents({
+    ordinaryIncome: split.ordinaryIncome,
+    longTermCapitalGainsIncome: split.longTermCapitalGainsIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
+}
+
+function solveBaselineForKnownWithdrawal({
+  withdrawalCash,
+  taxableOrdinaryWithdrawal = 0,
+  taxableLongTermCapitalGainsWithdrawal = 0,
+  requiredAfterTaxIncome,
+  baselineLongTermCapitalGainsShare = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  if (withdrawalCash <= 0) return [0, 0];
+
+  const taxImpactAtBaseline = (baselineIncome) => {
+    const baseline = splitIncomeByLtcgShare(baselineIncome, baselineLongTermCapitalGainsShare);
+    return taxImpactForKnownIncome({
+      baselineOrdinaryIncome: baseline.ordinaryIncome,
+      baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
+      additionalOrdinaryIncome: taxableOrdinaryWithdrawal,
+      additionalLongTermCapitalGainsIncome: taxableLongTermCapitalGainsWithdrawal,
       state,
       filingStatus,
       dependents,
     });
-    return afterTaxOrdinaryIncome({ income: baselineIncome, state, filingStatus, dependents })
-      + grossWithdrawal
-      - withdrawalTax;
   };
+
+  const netIncomeWithWithdrawal = (baselineIncome) => (
+    afterTaxIncomeWithSplit({
+      income: baselineIncome,
+      ltcgShare: baselineLongTermCapitalGainsShare,
+      state,
+      filingStatus,
+      dependents,
+    })
+    + withdrawalCash
+    - taxImpactAtBaseline(baselineIncome)
+  );
 
   let baselineIncome = 0;
   if (netIncomeWithWithdrawal(0) < requiredAfterTaxIncome) {
     let low = 0;
-    let high = Math.max(requiredAfterTaxIncome * 2, grossWithdrawal * 2, 1);
+    let high = Math.max(requiredAfterTaxIncome * 2, withdrawalCash * 2, 1);
     while (netIncomeWithWithdrawal(high) < requiredAfterTaxIncome) {
       high *= 2;
     }
@@ -407,42 +604,57 @@ function solveBaselineForOrdinaryWithdrawal({
     baselineIncome = high;
   }
 
-  const withdrawalTax = incrementalOrdinaryTax({
-    baselineIncome,
-    additionalOrdinaryIncome: grossWithdrawal,
+  return [baselineIncome, taxImpactAtBaseline(baselineIncome)];
+}
+
+function solveBaselineForOrdinaryWithdrawal({
+  grossWithdrawal,
+  requiredAfterTaxIncome,
+  baselineLongTermCapitalGainsShare = 0,
+  state,
+  filingStatus,
+  dependents,
+}) {
+  return solveBaselineForKnownWithdrawal({
+    withdrawalCash: grossWithdrawal,
+    taxableOrdinaryWithdrawal: grossWithdrawal,
+    requiredAfterTaxIncome,
+    baselineLongTermCapitalGainsShare,
     state,
     filingStatus,
     dependents,
   });
-  return [baselineIncome, withdrawalTax];
 }
 
 function incrementalLongTermCapitalGainsTax({
-  baselineOrdinaryIncome,
+  baselineIncome = null,
+  baselineLongTermCapitalGainsShare = 0,
+  baselineOrdinaryIncome = 0,
+  baselineLongTermCapitalGainsIncome = 0,
   additionalLongTermCapitalGains,
   state,
   filingStatus,
   dependents,
 }) {
   if (additionalLongTermCapitalGains <= 0) return 0;
-  const baseTax = totalIncomeTax({
-    income: baselineOrdinaryIncome,
+  const baseline = baselineIncome === null
+    ? { ordinaryIncome: baselineOrdinaryIncome, longTermCapitalGainsIncome: baselineLongTermCapitalGainsIncome }
+    : splitIncomeByLtcgShare(baselineIncome, baselineLongTermCapitalGainsShare);
+  return taxImpactForKnownIncome({
+    baselineOrdinaryIncome: baseline.ordinaryIncome,
+    baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
+    additionalLongTermCapitalGainsIncome: additionalLongTermCapitalGains,
     state,
     filingStatus,
     dependents,
   });
-  const fullTax = totalIncomeTax({
-    income: baselineOrdinaryIncome + additionalLongTermCapitalGains,
-    state,
-    filingStatus,
-    dependents,
-    longTermCapitalGainsIncome: additionalLongTermCapitalGains,
-  });
-  return Math.max(0, fullTax - baseTax);
 }
 
 function longTermCapitalGainsSliceLowHighRates({
-  baselineOrdinaryIncome,
+  baselineIncome = null,
+  baselineLongTermCapitalGainsShare = 0,
+  baselineOrdinaryIncome = 0,
+  baselineLongTermCapitalGainsIncome = 0,
   additionalLongTermCapitalGains,
   state,
   filingStatus,
@@ -451,22 +663,28 @@ function longTermCapitalGainsSliceLowHighRates({
   if (additionalLongTermCapitalGains <= 0) return [0, 0];
   const lowIncrement = Math.min(1, additionalLongTermCapitalGains);
   const highIncrement = Math.min(1, additionalLongTermCapitalGains);
+  const baseline = baselineIncome === null
+    ? { ordinaryIncome: baselineOrdinaryIncome, longTermCapitalGainsIncome: baselineLongTermCapitalGainsIncome }
+    : splitIncomeByLtcgShare(baselineIncome, baselineLongTermCapitalGainsShare);
   const lowTax = incrementalLongTermCapitalGainsTax({
-    baselineOrdinaryIncome,
+    baselineOrdinaryIncome: baseline.ordinaryIncome,
+    baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
     additionalLongTermCapitalGains: lowIncrement,
     state,
     filingStatus,
     dependents,
   });
   const fullTax = incrementalLongTermCapitalGainsTax({
-    baselineOrdinaryIncome,
+    baselineOrdinaryIncome: baseline.ordinaryIncome,
+    baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
     additionalLongTermCapitalGains,
     state,
     filingStatus,
     dependents,
   });
   const beforeHighTax = incrementalLongTermCapitalGainsTax({
-    baselineOrdinaryIncome,
+    baselineOrdinaryIncome: baseline.ordinaryIncome,
+    baselineLongTermCapitalGainsIncome: baseline.longTermCapitalGainsIncome,
     additionalLongTermCapitalGains: additionalLongTermCapitalGains - highIncrement,
     state,
     filingStatus,
@@ -479,6 +697,7 @@ function solveTaxableBrokerageWithdrawalForNet({
   accountValue,
   basis,
   requiredAfterTaxIncome,
+  baselineLongTermCapitalGainsShare = 0,
   state,
   filingStatus,
   dependents,
@@ -486,38 +705,11 @@ function solveTaxableBrokerageWithdrawalForNet({
   if (accountValue <= 0) return [0, 0, 0, requiredAfterTaxIncome];
   const gainRatio = Math.max(0, accountValue - basis) / accountValue;
   const taxableGain = accountValue * gainRatio;
-
-  const netIncomeWithWithdrawal = (baselineIncome) => {
-    const tax = incrementalLongTermCapitalGainsTax({
-      baselineOrdinaryIncome: baselineIncome,
-      additionalLongTermCapitalGains: taxableGain,
-      state,
-      filingStatus,
-      dependents,
-    });
-    return afterTaxOrdinaryIncome({ income: baselineIncome, state, filingStatus, dependents })
-      + accountValue
-      - tax;
-  };
-
-  let baselineIncome = 0;
-  if (netIncomeWithWithdrawal(0) < requiredAfterTaxIncome) {
-    let low = 0;
-    let high = Math.max(requiredAfterTaxIncome * 2, accountValue * 2, 1);
-    while (netIncomeWithWithdrawal(high) < requiredAfterTaxIncome) {
-      high *= 2;
-    }
-    for (let index = 0; index < 60; index += 1) {
-      const mid = (low + high) / 2;
-      if (netIncomeWithWithdrawal(mid) < requiredAfterTaxIncome) low = mid;
-      else high = mid;
-    }
-    baselineIncome = high;
-  }
-
-  const tax = incrementalLongTermCapitalGainsTax({
-    baselineOrdinaryIncome: baselineIncome,
-    additionalLongTermCapitalGains: taxableGain,
+  const [baselineIncome, tax] = solveBaselineForKnownWithdrawal({
+    withdrawalCash: accountValue,
+    taxableLongTermCapitalGainsWithdrawal: taxableGain,
+    requiredAfterTaxIncome,
+    baselineLongTermCapitalGainsShare,
     state,
     filingStatus,
     dependents,
@@ -565,18 +757,6 @@ function futureValue(amount, years, annualReturn, annualExpense = 0) {
   return amount * ((1 + netReturn) ** Math.max(0, years));
 }
 
-function incomeTaxSavingsFromDeduction({ currentIncome, deduction, state, filingStatus, dependents }) {
-  if (deduction <= 0) return 0;
-  const before = totalIncomeTax({ income: currentIncome, state, filingStatus, dependents });
-  const after = totalIncomeTax({
-    income: Math.max(0, currentIncome - deduction),
-    state,
-    filingStatus,
-    dependents,
-  });
-  return Math.max(0, before - after);
-}
-
 function clampPercent(value, fallback) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -618,15 +798,31 @@ function hsaPayrollTaxSavings({
   return Math.max(0, socialSecuritySavings + medicareSavings + additionalMedicareSavings);
 }
 
-function incomeTaxCostOnIncomeSlice({ currentIncome, incomeSlice, state, filingStatus, dependents }) {
+function incomeTaxCostOnIncomeSlice({
+  currentIncome,
+  currentLongTermCapitalGainsShare = 0,
+  incomeSlice,
+  state,
+  filingStatus,
+  dependents,
+}) {
   if (incomeSlice <= 0) return 0;
-  const before = totalIncomeTax({
-    income: Math.max(0, currentIncome - incomeSlice),
+  const currentSplit = splitIncomeByLtcgShare(currentIncome, currentLongTermCapitalGainsShare);
+  const ordinarySlice = Math.min(incomeSlice, currentSplit.ordinaryIncome);
+  const before = totalIncomeTaxForComponents({
+    ordinaryIncome: Math.max(0, currentSplit.ordinaryIncome - ordinarySlice),
+    longTermCapitalGainsIncome: currentSplit.longTermCapitalGainsIncome,
     state,
     filingStatus,
     dependents,
   });
-  const after = totalIncomeTax({ income: currentIncome, state, filingStatus, dependents });
+  const after = totalIncomeTaxForComponents({
+    ordinaryIncome: currentSplit.ordinaryIncome,
+    longTermCapitalGainsIncome: currentSplit.longTermCapitalGainsIncome,
+    state,
+    filingStatus,
+    dependents,
+  });
   return Math.max(0, after - before);
 }
 
@@ -639,24 +835,28 @@ function optimizeIncrementalRetirementDollar(inputs) {
     inputs.spouseCoveredByWorkplacePlan,
   );
   const results = [];
-  const contributionBaselineIncome = Math.max(0, inputs.currentIncome - inputs.pretaxBudget);
+  const currentIncomeSplit = splitIncomeByLtcgShare(inputs.currentIncome, inputs.currentLongTermCapitalGainsShare);
+  const ordinaryContributionSlice = Math.min(inputs.pretaxBudget, currentIncomeSplit.ordinaryIncome);
+  const contributionBaselineOrdinaryIncome = Math.max(0, currentIncomeSplit.ordinaryIncome - ordinaryContributionSlice);
   const currentIncomeTaxOnBudget = incomeTaxCostOnIncomeSlice({
     currentIncome: inputs.currentIncome,
+    currentLongTermCapitalGainsShare: inputs.currentLongTermCapitalGainsShare,
     incomeSlice: inputs.pretaxBudget,
     state: inputs.currentState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
-  const [contributionIncomeLowRate, contributionIncomeHighRate] = ordinarySliceLowHighRates({
-    baselineIncome: contributionBaselineIncome,
-    additionalOrdinaryIncome: inputs.pretaxBudget,
+  const [contributionIncomeLowRate, contributionIncomeHighRate] = ordinarySliceLowHighRatesFromComponents({
+    baselineOrdinaryIncome: contributionBaselineOrdinaryIncome,
+    baselineLongTermCapitalGainsIncome: currentIncomeSplit.longTermCapitalGainsIncome,
+    additionalOrdinaryIncome: ordinaryContributionSlice,
     state: inputs.currentState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
   const payrollTaxOnBudget = hsaPayrollTaxSavings({
-    wageIncomeBeforeContribution: inputs.currentIncome,
-    contribution: inputs.pretaxBudget,
+    wageIncomeBeforeContribution: currentIncomeSplit.ordinaryIncome,
+    contribution: ordinaryContributionSlice,
     filingStatus: inputs.filingStatus,
     primaryEarnerShare: inputs.primaryEarnerShare,
   });
@@ -717,6 +917,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const tradIraTaxableSlice = inputs.pretaxBudget * (1 - iraDeductionFraction);
   const tradIraTaxCost = incomeTaxCostOnIncomeSlice({
     currentIncome: inputs.currentIncome,
+    currentLongTermCapitalGainsShare: inputs.currentLongTermCapitalGainsShare,
     incomeSlice: tradIraTaxableSlice,
     state: inputs.currentState,
     filingStatus: inputs.filingStatus,
@@ -730,12 +931,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const [tradIraBaseline, tradIraWithdrawalTax] = solveBaselineForOrdinaryWithdrawal({
     grossWithdrawal: tradIraTaxableWithdrawal,
     requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
   const tradIraRates = ordinarySliceLowHighRates({
     baselineIncome: tradIraBaseline,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     additionalOrdinaryIncome: tradIraTaxableWithdrawal,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
@@ -789,12 +992,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const [trad401kBaseline, trad401kWithdrawalTax] = solveBaselineForOrdinaryWithdrawal({
     grossWithdrawal: trad401kFv,
     requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
   const trad401kRates = ordinarySliceLowHighRates({
     baselineIncome: trad401kBaseline,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     additionalOrdinaryIncome: trad401kFv,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
@@ -828,12 +1033,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const [hsaBaseline, hsaWithdrawalTax] = solveBaselineForOrdinaryWithdrawal({
     grossWithdrawal: hsaFv,
     requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
   const hsaRates = ordinarySliceLowHighRates({
     baselineIncome: hsaBaseline,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     additionalOrdinaryIncome: hsaFv,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
@@ -866,12 +1073,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
     accountValue: taxableFv,
     basis: taxableContribution,
     requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
   const taxableRates = longTermCapitalGainsSliceLowHighRates({
-    baselineOrdinaryIncome: taxableBaselineIncome,
+    baselineIncome: taxableBaselineIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
     additionalLongTermCapitalGains: taxableGainWithdrawn,
     state: inputs.retirementState,
     filingStatus: inputs.filingStatus,
@@ -922,6 +1131,8 @@ function getInputs() {
     withdrawalAge: Math.max(0, Math.trunc(valueFromNumber("withdrawal-age"))),
     pretaxBudget: valueFromNumber("pretax-budget"),
     primaryEarnerShare: valueFromNumber("primary-earner-share") / 100,
+    currentLongTermCapitalGainsShare: valueFromNumber("current-ltcg-share") / 100,
+    retirementLongTermCapitalGainsShare: valueFromNumber("retirement-ltcg-share") / 100,
     annualReturn: valueFromNumber("annual-return") / 100,
     retirementAccountExpense: valueFromNumber("base-expense") / 100,
     employerPlanExtraExpense: valueFromNumber("extra-401k-expense") / 100,

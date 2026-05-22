@@ -73,6 +73,14 @@
               <input id="primary-earner-share" name="primaryEarnerShare" type="number" min="0" max="100" step="5" value="50">
             </label>
             <label>
+              <span>Current income from LTCG / qualified dividends</span>
+              <input id="current-ltcg-share" name="currentLtcgShare" type="number" min="0" max="100" step="5" value="0">
+            </label>
+            <label>
+              <span>Retirement baseline income from LTCG / qualified dividends</span>
+              <input id="retirement-ltcg-share" name="retirementLtcgShare" type="number" min="0" max="100" step="5" value="0">
+            </label>
+            <label>
               <span>Expected annual investment return</span>
               <input id="annual-return" name="annualReturn" type="number" min="0" max="15" step="0.25" value="7">
             </label>
@@ -111,12 +119,12 @@
         <div class="results-cards" id="results-cards"></div>
         <div id="footnotes" class="footnotes"></div>
         <p class="model-note">
-          Prototype assumptions: qualified Roth withdrawals, no early withdrawal penalties, no employer match, no contribution limits except income-driven IRA notes, current-law 2026 brackets, taxable brokerage gains treated as long-term capital gains, and HSA withdrawals treated as nonmedical retirement distributions after age 65.
+          Prototype assumptions: qualified Roth withdrawals, no early withdrawal penalties, no employer match, no contribution limits except income-driven IRA notes, current-law 2026 brackets, NIIT where applicable, taxable brokerage gains treated as long-term capital gains, and HSA withdrawals treated as nonmedical retirement distributions after age 65.
         </p>
       </section>
     </section>
   </main>
 
-  <script src="app.js?v=20260521-payroll-split"></script>
+  <script src="app.js?v=20260521-ltcg-niit"></script>
 </body>
 </html>
