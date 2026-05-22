@@ -8,6 +8,10 @@
   --accent: #0f766e;
   --accent-dark: #115e59;
   --accent-soft: #e4f2ef;
+  --warning: #9a4f12;
+  --warning-soft: #f8e2ce;
+  --unavailable-text: #8f9aa6;
+  --unavailable-soft: #f2f4f6;
   --warn-soft: #fff4d9;
   --shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
 }
@@ -263,6 +267,11 @@ th {
   text-align: right;
 }
 
+th.account-warning-header {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
 th:first-child,
 td:first-child {
   position: sticky;
@@ -284,6 +293,12 @@ tr.rank-row td:not(:first-child) {
   font-weight: 800;
 }
 
+td.account-unavailable-cell,
+tr.rank-row td.account-unavailable-cell:not(:first-child) {
+  color: var(--unavailable-text);
+  background: var(--unavailable-soft);
+}
+
 .note-cell {
   text-align: left;
   color: var(--muted);
@@ -291,9 +306,13 @@ tr.rank-row td:not(:first-child) {
   line-height: 1.25;
 }
 
+td.account-unavailable-cell.note-cell {
+  color: var(--unavailable-text);
+}
+
 .unavailable {
-  color: #9b6b10;
-  background: var(--warn-soft);
+  color: var(--unavailable-text);
+  background: var(--unavailable-soft);
 }
 
 .footnotes {
@@ -420,7 +439,12 @@ tr.rank-row td:not(:first-child) {
   }
 
   .unavailable-card {
-    background: var(--warn-soft);
+    background: var(--unavailable-soft);
+    color: var(--unavailable-text);
+  }
+
+  .benefit-warning-card .card-rank strong {
+    color: var(--warning);
   }
 
   .card-rank,

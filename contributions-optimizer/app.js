@@ -732,6 +732,12 @@ function rothIraEligibilityNote(income, filingStatus) {
   return "Direct Roth IRA contribution appears income-ineligible; backdoor Roth not modeled.";
 }
 
+function rothIraContributionFraction(income, filingStatus) {
+  const limits = ROTH_IRA_PHASEOUT_2026[filingStatus];
+  if (!limits) return 1;
+  return phaseoutFraction(income, ...limits);
+}
+
 function traditionalIraDeductionFraction(income, filingStatus, coveredByWorkplacePlan, spouseCoveredByWorkplacePlan) {
   if (!coveredByWorkplacePlan && !spouseCoveredByWorkplacePlan) return 1;
   if (filingStatus === "single" && coveredByWorkplacePlan) {
@@ -828,6 +834,7 @@ function incomeTaxCostOnIncomeSlice({
 
 function optimizeIncrementalRetirementDollar(inputs) {
   const years = Math.max(0, inputs.withdrawalAge - inputs.currentAge);
+  const rothIraFraction = rothIraContributionFraction(inputs.currentIncome, inputs.filingStatus);
   const iraDeductionFraction = traditionalIraDeductionFraction(
     inputs.currentIncome,
     inputs.filingStatus,
@@ -864,6 +871,20 @@ function optimizeIncrementalRetirementDollar(inputs) {
   const payrollTaxRateOnBudget = inputs.pretaxBudget ? payrollTaxOnBudget / inputs.pretaxBudget : 0;
   const taxableContributionLowRate = contributionIncomeLowRate + payrollTaxRateOnBudget;
   const taxableContributionHighRate = contributionIncomeHighRate + payrollTaxRateOnBudget;
+  const stateConformityFootnote = {
+    severity: "info",
+    text: "State-specific account conformity rules are not separately modeled.",
+  };
+  const rothEarlyWithdrawalFootnote = {
+    severity: "warning",
+    text: "Planned withdrawal age is before 59 1/2, so qualified Roth withdrawal treatment may not be available.",
+  };
+  const wageLimitedFootnote = {
+    severity: "warning",
+    text: "Modeled wage/ordinary income is below the pretax amount being compared, so payroll-style contribution benefits are limited.",
+  };
+  const payrollContributionFootnotes = ordinaryContributionSlice < inputs.pretaxBudget ? [wageLimitedFootnote] : [];
+  const rothWithdrawalFootnotes = inputs.withdrawalAge < 60 ? [rothEarlyWithdrawalFootnote] : [];
 
   const addCommonFields = (row) => {
     const isUnavailable = row.futureValueAfterTax === null;
@@ -879,6 +900,9 @@ function optimizeIncrementalRetirementDollar(inputs) {
         : 0,
       futureValueNoFeesOrTaxes: futureValue(inputs.pretaxBudget, years, inputs.annualReturn, 0),
       yearsToWithdrawal: years,
+      footnotes: row.footnotes || [],
+      headerWarning: Boolean(row.headerWarning),
+      contributionUnavailable: Boolean(row.contributionUnavailable),
     };
     enriched.totalFeesAndTaxImpact = isUnavailable
       ? null
@@ -899,15 +923,30 @@ function optimizeIncrementalRetirementDollar(inputs) {
 
   const rothIraContribution = afterTaxBudget;
   const rothIraFv = futureValue(rothIraContribution, years, inputs.annualReturn, inputs.retirementAccountExpense);
+  const rothIraFootnotes = [stateConformityFootnote, ...rothWithdrawalFootnotes];
+  if (rothIraFraction === 0) {
+    rothIraFootnotes.push({
+      severity: "unavailable",
+      text: "Direct Roth IRA contribution appears income-ineligible; backdoor Roth is not modeled.",
+    });
+  } else if (rothIraFraction < 1) {
+    rothIraFootnotes.push({
+      severity: "warning",
+      text: "Direct Roth IRA contribution may be partially income-limited.",
+    });
+  }
   results.push(addCommonFields({
     account: "Roth IRA",
     contributionToday: rothIraContribution,
     futureValueBeforeTax: rothIraFv,
-    futureValueAfterTax: rothIraFv,
+    futureValueAfterTax: rothIraFraction > 0 ? rothIraFv : null,
     taxDueAtWithdrawal: 0,
     currentTaxSavings: 0,
     eligibilityNote: rothIraEligibilityNote(inputs.currentIncome, inputs.filingStatus),
     assumptions: "After-tax contribution; qualified withdrawal tax-free.",
+    footnotes: rothIraFootnotes,
+    headerWarning: rothIraFootnotes.some((note) => note.severity !== "info"),
+    contributionUnavailable: rothIraFraction === 0,
     contributionLowestEffectiveTaxRate: taxableContributionLowRate,
     contributionHighestEffectiveTaxRate: taxableContributionHighRate,
     withdrawalLowestEffectiveTaxRate: 0,
@@ -945,6 +984,15 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   if (nondeductibleBasis > 0) tradIraRates[0] = 0;
+  const tradIraFootnotes = [stateConformityFootnote];
+  if (iraDeductionFraction < 1) {
+    tradIraFootnotes.push({
+      severity: "warning",
+      text: iraDeductionFraction > 0
+        ? "Traditional IRA deduction appears partially income-limited."
+        : "Traditional IRA deduction appears unavailable; modeled as nondeductible basis plus taxable earnings.",
+    });
+  }
   results.push(addCommonFields({
     account: "Traditional IRA",
     contributionToday: tradIraContribution,
@@ -954,6 +1002,8 @@ function optimizeIncrementalRetirementDollar(inputs) {
     currentTaxSavings: tradIraTaxSavings,
     eligibilityNote: traditionalIraEligibilityNote(iraDeductionFraction),
     assumptions: "Deductible portion gets current tax benefit; nondeductible basis is not taxed again.",
+    footnotes: tradIraFootnotes,
+    headerWarning: tradIraFootnotes.some((note) => note.severity !== "info"),
     contributionLowestEffectiveTaxRate: taxableContributionLowRate * (1 - iraDeductionFraction),
     contributionHighestEffectiveTaxRate: taxableContributionHighRate * (1 - iraDeductionFraction),
     withdrawalLowestEffectiveTaxRate: tradIraRates[0],
@@ -967,6 +1017,13 @@ function optimizeIncrementalRetirementDollar(inputs) {
     inputs.annualReturn,
     inputs.retirementAccountExpense + inputs.employerPlanExtraExpense,
   );
+  const roth401kFootnotes = [stateConformityFootnote, ...rothWithdrawalFootnotes, ...payrollContributionFootnotes];
+  if (!inputs.has401k) {
+    roth401kFootnotes.push({
+      severity: "unavailable",
+      text: "No 401k access selected, so this account is not modeled as available.",
+    });
+  }
   results.push(addCommonFields({
     account: "Roth 401k",
     contributionToday: roth401kContribution,
@@ -976,6 +1033,9 @@ function optimizeIncrementalRetirementDollar(inputs) {
     currentTaxSavings: 0,
     eligibilityNote: inputs.has401k ? "Requires access to a Roth 401k plan." : "Not modeled as available: no 401k access selected.",
     assumptions: "After-tax contribution; qualified withdrawal tax-free.",
+    footnotes: roth401kFootnotes,
+    headerWarning: roth401kFootnotes.some((note) => note.severity !== "info"),
+    contributionUnavailable: !inputs.has401k,
     contributionLowestEffectiveTaxRate: taxableContributionLowRate,
     contributionHighestEffectiveTaxRate: taxableContributionHighRate,
     withdrawalLowestEffectiveTaxRate: 0,
@@ -1005,6 +1065,13 @@ function optimizeIncrementalRetirementDollar(inputs) {
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
+  const trad401kFootnotes = [stateConformityFootnote, ...payrollContributionFootnotes];
+  if (!inputs.has401k) {
+    trad401kFootnotes.push({
+      severity: "unavailable",
+      text: "No 401k access selected, so this account is not modeled as available.",
+    });
+  }
   results.push(addCommonFields({
     account: "Traditional 401k",
     contributionToday: trad401kContribution,
@@ -1014,6 +1081,9 @@ function optimizeIncrementalRetirementDollar(inputs) {
     currentTaxSavings: currentIncomeTaxOnBudget,
     eligibilityNote: inputs.has401k ? "Requires access to a traditional 401k plan." : "Not modeled as available: no 401k access selected.",
     assumptions: "Pre-tax contribution; withdrawal taxed as ordinary income.",
+    footnotes: trad401kFootnotes,
+    headerWarning: trad401kFootnotes.some((note) => note.severity !== "info"),
+    contributionUnavailable: !inputs.has401k,
     contributionLowestEffectiveTaxRate: payrollTaxRateOnBudget,
     contributionHighestEffectiveTaxRate: payrollTaxRateOnBudget,
     withdrawalLowestEffectiveTaxRate: trad401kRates[0],
@@ -1047,6 +1117,18 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   const hsaContributionRate = inputs.hsaPayrollContribution ? 0 : payrollTaxRateOnBudget;
+  const hsaFootnotes = [stateConformityFootnote, ...payrollContributionFootnotes];
+  if (!inputs.hasHsa) {
+    hsaFootnotes.push({
+      severity: "unavailable",
+      text: "HSA eligibility is not selected, so this account is not modeled as available.",
+    });
+  } else if (!inputs.hsaPayrollContribution) {
+    hsaFootnotes.push({
+      severity: "warning",
+      text: "HSA contribution is not modeled through payroll, so Social Security and Medicare tax savings are unavailable.",
+    });
+  }
   results.push(addCommonFields({
     account: "HSA",
     contributionToday: hsaContribution,
@@ -1055,7 +1137,10 @@ function optimizeIncrementalRetirementDollar(inputs) {
     taxDueAtWithdrawal: hsaWithdrawalTax,
     currentTaxSavings: currentIncomeTaxOnBudget + hsaPayrollSavings,
     eligibilityNote: inputs.hasHsa ? "Requires HSA eligibility." : "Not modeled as available: HSA eligibility not selected.",
-    assumptions: "Payroll HSA contributions get automatic FICA savings when selected; nonmedical distribution after age 65 is taxed as ordinary income with no penalty.",
+    assumptions: "Modeled as nonmedical age-65+ withdrawal: ordinary income tax, no penalty. Payroll contributions add FICA savings when selected.",
+    footnotes: hsaFootnotes,
+    headerWarning: hsaFootnotes.some((note) => note.severity !== "info"),
+    contributionUnavailable: !inputs.hasHsa,
     contributionLowestEffectiveTaxRate: hsaContributionRate,
     contributionHighestEffectiveTaxRate: hsaContributionRate,
     withdrawalLowestEffectiveTaxRate: hsaRates[0],
@@ -1176,6 +1261,41 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function prepareFootnotes(results) {
+  const footnoteMap = new Map();
+  const footnotes = [];
+  results.forEach((row) => {
+    row.footnoteNumbers = [];
+    (row.footnotes || []).forEach((note) => {
+      if (!note || !note.text) return;
+      if (!footnoteMap.has(note.text)) {
+        footnoteMap.set(note.text, footnotes.length + 1);
+        footnotes.push({ number: footnotes.length + 1, text: note.text });
+      }
+      row.footnoteNumbers.push(footnoteMap.get(note.text));
+    });
+  });
+  return footnotes;
+}
+
+function accountLabelWithFootnotes(row) {
+  const label = escapeHtml(row.account);
+  if (!row.footnoteNumbers || !row.footnoteNumbers.length) return label;
+  return `${label}<sup>${row.footnoteNumbers.join(",")}</sup>`;
+}
+
+function accountHeaderClass(row) {
+  return row.headerWarning ? "account-warning-header" : "";
+}
+
+function accountCellClass(row, cellClass = "", unavailable = false) {
+  return [
+    cellClass,
+    row.contributionUnavailable ? "account-unavailable-cell" : "",
+    unavailable ? "unavailable" : "",
+  ].filter(Boolean).join(" ");
+}
+
 function renderResults() {
   syncRangeOutputs();
   const table = document.getElementById("results-table");
@@ -1185,15 +1305,7 @@ function renderResults() {
 
   try {
     const results = optimizeIncrementalRetirementDollar(getInputs());
-    const hasTraditionalFootnote = results.some((row) => (
-      row.account === "Traditional IRA"
-      && row.eligibilityNote.toLowerCase().includes("income-ineligible")
-    ));
-
-    const accountLabels = results.map((row) => {
-      if (row.account === "Traditional IRA" && hasTraditionalFootnote) return "Traditional IRA<sup>1</sup>";
-      return escapeHtml(row.account);
-    });
+    const footnoteEntries = prepareFootnotes(results);
 
     const metrics = [
       ["Rank", (row) => String(row.rank), "rank-row"],
@@ -1218,11 +1330,13 @@ function renderResults() {
       ["Modeled assumptions", (row) => escapeHtml(row.assumptions), "", "note-cell"],
     ];
 
-    const header = `<thead><tr><th>Metric</th>${accountLabels.map((label) => `<th>${label}</th>`).join("")}</tr></thead>`;
+    const header = `<thead><tr><th>Metric</th>${results.map((row) => (
+      `<th class="${accountHeaderClass(row)}">${accountLabelWithFootnotes(row)}</th>`
+    )).join("")}</tr></thead>`;
     const body = metrics.map(([name, formatter, rowClass = "", cellClass = ""]) => (
       `<tr class="${rowClass}"><td>${escapeHtml(name)}</td>${results.map((row) => {
         const unavailable = row.futureValueAfterTax === null && name === "Available after withdrawal";
-        const classNames = [cellClass, unavailable ? "unavailable" : ""].filter(Boolean).join(" ");
+        const classNames = accountCellClass(row, cellClass, unavailable);
         return `<td class="${classNames}">${formatter(row)}</td>`;
       }).join("")}</tr>`
     )).join("");
@@ -1230,10 +1344,12 @@ function renderResults() {
     table.innerHTML = `${header}<tbody>${body}</tbody>`;
     cards.innerHTML = results.map((row) => {
       const unavailable = row.futureValueAfterTax === null;
-      const accountLabel = row.account === "Traditional IRA" && hasTraditionalFootnote
-        ? "Traditional IRA<sup>1</sup>"
-        : escapeHtml(row.account);
-      const cardClass = unavailable ? "result-card unavailable-card" : "result-card";
+      const accountLabel = accountLabelWithFootnotes(row);
+      const cardClass = [
+        "result-card",
+        row.headerWarning ? "benefit-warning-card" : "",
+        row.contributionUnavailable || unavailable ? "unavailable-card" : "",
+      ].filter(Boolean).join(" ");
       return `
         <article class="${cardClass}">
           <div class="card-rank">
@@ -1264,9 +1380,9 @@ function renderResults() {
     }).join("");
     const best = results.find((row) => row.futureValueAfterTax !== null);
     topAccount.textContent = best ? `${best.account}: ${formatMoney(best.futureValueAfterTax)}` : "No available account";
-    footnotes.innerHTML = hasTraditionalFootnote
-      ? "<p><sup>1</sup> Traditional IRA deduction appears income-ineligible under these inputs, so the model treats the contribution as nondeductible basis with taxable growth.</p>"
-      : "";
+    footnotes.innerHTML = footnoteEntries.map((note) => (
+      `<p><sup>${note.number}</sup> ${escapeHtml(note.text)}</p>`
+    )).join("");
   } catch (error) {
     table.innerHTML = `<tbody><tr><td>Error</td><td>${escapeHtml(error.message)}</td></tr></tbody>`;
     cards.innerHTML = `<article class="result-card"><strong>Error</strong><p>${escapeHtml(error.message)}</p></article>`;
