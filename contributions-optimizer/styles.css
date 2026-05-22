@@ -237,6 +237,27 @@ input[type="range"]:focus-visible {
   padding: 14px;
 }
 
+.priority-notice {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  border: 1px solid #e2b56d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #5d3510;
+  background: #fff5df;
+}
+
+.priority-notice strong {
+  color: #7c3f0b;
+  font-size: 0.9rem;
+}
+
+.priority-notice span {
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
