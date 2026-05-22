@@ -25,11 +25,11 @@
       <form class="input-panel" id="optimizer-form">
         <div class="field-grid">
           <label>
-            <span>Current ordinary income</span>
+            <span>Current income ($/year)</span>
             <input id="current-income" name="currentIncome" type="number" min="0" step="5000" value="150000">
           </label>
           <label>
-            <span>Required annual after-tax retirement income</span>
+            <span>Required after-tax retirement income ($/year)</span>
             <input id="retirement-income" name="retirementIncome" type="number" min="0" step="5000" value="100000">
           </label>
           <label>
@@ -40,7 +40,7 @@
             </select>
           </label>
           <label>
-            <span>Dependents</span>
+            <span>Dependents (count)</span>
             <input id="dependents" name="dependents" type="number" min="0" step="1" value="0">
           </label>
           <label>
@@ -52,11 +52,11 @@
             <select id="retirement-state" name="retirementState"></select>
           </label>
           <label>
-            <span>Current age</span>
+            <span>Current age (years)</span>
             <input id="current-age" name="currentAge" type="number" min="0" max="120" step="1" value="35">
           </label>
           <label>
-            <span>Planned withdrawal age</span>
+            <span>Planned withdrawal age (years)</span>
             <input id="withdrawal-age" name="withdrawalAge" type="number" min="0" max="120" step="1" value="65">
           </label>
         </div>
@@ -65,39 +65,45 @@
           <summary>Advanced options</summary>
           <div class="field-grid advanced-grid">
             <label>
-              <span>Pretax income amount to compare</span>
+              <span>Pretax income amount to compare ($)</span>
               <input id="pretax-budget" name="pretaxBudget" type="number" min="1" step="100" value="3000">
             </label>
             <label>
-              <span>Primary earner share of household wages</span>
+              <span>Primary earner share of household wages (%)</span>
               <input id="primary-earner-share" name="primaryEarnerShare" type="number" min="0" max="100" step="5" value="50">
             </label>
-            <label>
-              <span>Current income from LTCG / qualified dividends</span>
-              <input id="current-ltcg-share" name="currentLtcgShare" type="number" min="0" max="100" step="5" value="0">
+            <label class="range-field">
+              <span>Current income from LTCG / qualified dividends (%)</span>
+              <div class="range-control">
+                <input id="current-ltcg-share" name="currentLtcgShare" type="range" min="0" max="100" step="5" value="0">
+                <output id="current-ltcg-share-output" for="current-ltcg-share">0%</output>
+              </div>
+            </label>
+            <label class="range-field">
+              <span>Retirement baseline income from LTCG / qualified dividends (%)</span>
+              <div class="range-control">
+                <input id="retirement-ltcg-share" name="retirementLtcgShare" type="range" min="0" max="100" step="5" value="0">
+                <output id="retirement-ltcg-share-output" for="retirement-ltcg-share">0%</output>
+              </div>
             </label>
             <label>
-              <span>Retirement baseline income from LTCG / qualified dividends</span>
-              <input id="retirement-ltcg-share" name="retirementLtcgShare" type="number" min="0" max="100" step="5" value="0">
-            </label>
-            <label>
-              <span>Expected annual investment return</span>
+              <span>Expected annual investment return (%)</span>
               <input id="annual-return" name="annualReturn" type="number" min="0" max="15" step="0.25" value="7">
             </label>
             <label>
-              <span>Base annual account expense drag</span>
+              <span>Base annual account expense drag (%)</span>
               <input id="base-expense" name="baseExpense" type="number" min="0" max="3" step="0.05" value="0.10">
             </label>
             <label>
-              <span>Extra 401k annual expense drag</span>
+              <span>Extra 401k annual expense drag (%)</span>
               <input id="extra-401k-expense" name="extra401kExpense" type="number" min="0" max="3" step="0.05" value="0.20">
             </label>
             <label>
-              <span>Taxable brokerage annual tax drag</span>
+              <span>Taxable brokerage annual tax drag (%)</span>
               <input id="taxable-drag" name="taxableDrag" type="number" min="0" max="3" step="0.05" value="0">
             </label>
             <label>
-              <span>Extra HSA annual expense drag</span>
+              <span>Extra HSA annual expense drag (%)</span>
               <input id="extra-hsa-expense" name="extraHsaExpense" type="number" min="0" max="3" step="0.05" value="0.20">
             </label>
           </div>
@@ -125,6 +131,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260521-ltcg-niit"></script>
+  <script src="app.js?v=20260522-slider-units"></script>
 </body>
 </html>

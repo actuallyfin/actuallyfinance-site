@@ -1119,6 +1119,18 @@ function valueFromNumber(id) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function syncRangeOutput(id) {
+  const input = document.getElementById(id);
+  const output = document.getElementById(`${id}-output`);
+  if (!input || !output) return;
+  output.textContent = `${valueFromNumber(id)}%`;
+}
+
+function syncRangeOutputs() {
+  syncRangeOutput("current-ltcg-share");
+  syncRangeOutput("retirement-ltcg-share");
+}
+
 function getInputs() {
   return {
     currentIncome: valueFromNumber("current-income"),
@@ -1165,6 +1177,7 @@ function escapeHtml(value) {
 }
 
 function renderResults() {
+  syncRangeOutputs();
   const table = document.getElementById("results-table");
   const cards = document.getElementById("results-cards");
   const topAccount = document.getElementById("top-account");

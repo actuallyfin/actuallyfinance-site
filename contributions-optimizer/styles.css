@@ -146,10 +146,47 @@ select {
   background: #fff;
 }
 
+input[type="range"] {
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  accent-color: var(--accent);
+  background: transparent;
+}
+
 input:focus,
 select:focus {
   outline: 2px solid rgba(15, 118, 110, 0.22);
   border-color: var(--accent);
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid rgba(15, 118, 110, 0.22);
+  outline-offset: 3px;
+}
+
+.range-field {
+  gap: 8px;
+}
+
+.range-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+  min-height: 38px;
+}
+
+.range-control output {
+  justify-self: end;
+  min-width: 42px;
+  color: var(--ink);
+  font-weight: 750;
+  text-align: right;
 }
 
 .advanced {
