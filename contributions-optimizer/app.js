@@ -38,13 +38,6 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const moneyCentsFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 function parseNumber(value) {
   if (value === undefined || value === null || value === "") return null;
   const parsed = Number(value);
@@ -1322,11 +1315,6 @@ function formatMoney(value) {
   return moneyFormatter.format(value);
 }
 
-function formatMoneyCents(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "Not available";
-  return moneyCentsFormatter.format(value);
-}
-
 function formatPercent(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "Not available";
   return `${(value * 100).toFixed(2)}%`;
@@ -1383,7 +1371,11 @@ function updateRetirementPretaxEquivalent(topAccount, footnoteNumber) {
     return;
   }
   const totalGrossResources = topAccount.baselinePretaxIncomeBeforeWithdrawal + topAccount.futureValueBeforeTax;
-  output.innerHTML = `(${formatMoneyCents(totalGrossResources)} gross resources if using ${escapeHtml(topAccount.account)}<sup>${footnoteNumber}</sup>)`;
+  output.innerHTML = `(${formatMoney(totalGrossResources)} pretax income<sup>${footnoteNumber}</sup>)`;
+}
+
+function assumptionDetails(row) {
+  return `<details class="assumption-details"><summary>Show</summary><p>${escapeHtml(row.assumptions)}</p></details>`;
 }
 
 function renderResults() {
@@ -1402,8 +1394,8 @@ function renderResults() {
     footnoteEntries.push({
       number: topPretaxFootnoteNumber,
       text: best
-        ? `Gross resources estimate adds baseline pretax income and the gross modeled withdrawal from the top-ranked account, ${best.account}.`
-        : "Gross resources estimate assumes the top-ranked available account is used for the modeled account withdrawal.",
+        ? `Pretax income estimate assumes the top-ranked account, ${best.account}, is used for the modeled account withdrawal.`
+        : "Pretax income estimate assumes the top-ranked available account is used for the modeled account withdrawal.",
     });
     updateRetirementPretaxEquivalent(best, topPretaxFootnoteNumber);
 
@@ -1426,8 +1418,7 @@ function renderResults() {
       ["Total fees and tax impact %", (row) => formatPercent(row.totalFeesAndTaxImpactPct)],
       ["Net total growth %", (row) => formatPercent(row.netTotalGrowthPct)],
       ["Net annualized growth %", (row) => formatPercent(row.netAnnualizedGrowthPct)],
-      ["Eligibility note", (row) => escapeHtml(row.eligibilityNote), "", "note-cell"],
-      ["Modeled assumptions", (row) => escapeHtml(row.assumptions), "", "note-cell"],
+      ["Modeled assumptions", (row) => assumptionDetails(row), "", "note-cell"],
     ];
 
     const header = `<thead><tr><th>Metric</th>${results.map((row) => (
@@ -1471,8 +1462,7 @@ function renderResults() {
             <div><dt>Net annualized growth</dt><dd>${formatPercent(row.netAnnualizedGrowthPct)}</dd></div>
           </dl>
           <details class="card-details">
-            <summary>Assumptions and eligibility</summary>
-            <p>${escapeHtml(row.eligibilityNote)}</p>
+            <summary>Modeled assumptions</summary>
             <p>${escapeHtml(row.assumptions)}</p>
           </details>
         </article>
