@@ -1382,7 +1382,8 @@ function updateRetirementPretaxEquivalent(topAccount, footnoteNumber) {
     output.textContent = "";
     return;
   }
-  output.innerHTML = `(${formatMoneyCents(topAccount.baselinePretaxIncomeBeforeWithdrawal)} pretax if using ${escapeHtml(topAccount.account)}<sup>${footnoteNumber}</sup>)`;
+  const totalGrossResources = topAccount.baselinePretaxIncomeBeforeWithdrawal + topAccount.futureValueBeforeTax;
+  output.innerHTML = `(${formatMoneyCents(totalGrossResources)} gross resources if using ${escapeHtml(topAccount.account)}<sup>${footnoteNumber}</sup>)`;
 }
 
 function renderResults() {
@@ -1401,8 +1402,8 @@ function renderResults() {
     footnoteEntries.push({
       number: topPretaxFootnoteNumber,
       text: best
-        ? `Pretax income estimate assumes the top-ranked account, ${best.account}, is used for the modeled account withdrawal.`
-        : "Pretax income estimate assumes the top-ranked available account is used for the modeled account withdrawal.",
+        ? `Gross resources estimate adds baseline pretax income and the gross modeled withdrawal from the top-ranked account, ${best.account}.`
+        : "Gross resources estimate assumes the top-ranked available account is used for the modeled account withdrawal.",
     });
     updateRetirementPretaxEquivalent(best, topPretaxFootnoteNumber);
 
