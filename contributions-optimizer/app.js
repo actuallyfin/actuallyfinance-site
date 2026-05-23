@@ -913,12 +913,27 @@ function optimizeIncrementalRetirementDollar(inputs) {
     severity: "warning",
     text: "Planned withdrawal age is before 59 1/2, so qualified Roth withdrawal treatment may not be available.",
   };
+  const traditionalIraEarlyWithdrawalFootnote = {
+    severity: "warning",
+    text: "Planned withdrawal age is before 59 1/2, so Traditional IRA withdrawals may face a 10% early-distribution tax unless an exception applies.",
+  };
+  const k401EarlyWithdrawalFootnote = {
+    severity: "warning",
+    text: "Planned withdrawal age is before 59 1/2; 401k withdrawals may face a 10% early-distribution tax unless an exception applies, and access can depend on plan rules.",
+  };
+  const hsaEarlyWithdrawalFootnote = {
+    severity: "warning",
+    text: "Planned withdrawal age is before 65; nonmedical HSA withdrawals may face a 20% additional tax, while qualified medical expenses can be tax-free.",
+  };
   const wageLimitedFootnote = {
     severity: "warning",
     text: "Modeled wage/ordinary income is below the pretax amount being compared, so payroll-style contribution benefits are limited.",
   };
   const payrollContributionFootnotes = ordinaryContributionSlice < inputs.pretaxBudget ? [wageLimitedFootnote] : [];
   const rothWithdrawalFootnotes = inputs.withdrawalAge < 60 ? [rothEarlyWithdrawalFootnote] : [];
+  const traditionalIraWithdrawalFootnotes = inputs.withdrawalAge < 60 ? [traditionalIraEarlyWithdrawalFootnote] : [];
+  const k401WithdrawalFootnotes = inputs.withdrawalAge < 60 ? [k401EarlyWithdrawalFootnote] : [];
+  const hsaWithdrawalFootnotes = inputs.withdrawalAge < 65 ? [hsaEarlyWithdrawalFootnote] : [];
 
   const addCommonFields = (row) => {
     const isUnavailable = row.futureValueAfterTax === null;
@@ -1018,7 +1033,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   if (nondeductibleBasis > 0) tradIraRates[0] = 0;
-  const tradIraFootnotes = [];
+  const tradIraFootnotes = [...traditionalIraWithdrawalFootnotes];
   if (iraDeductionFraction < 1) {
     tradIraFootnotes.push({
       severity: "warning",
@@ -1051,7 +1066,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     inputs.annualReturn,
     inputs.retirementAccountExpense + inputs.employerPlanExtraExpense,
   );
-  const roth401kFootnotes = [...rothWithdrawalFootnotes, ...payrollContributionFootnotes];
+  const roth401kFootnotes = [...rothWithdrawalFootnotes, ...k401WithdrawalFootnotes, ...payrollContributionFootnotes];
   if (!inputs.has401k) {
     roth401kFootnotes.push({
       severity: "unavailable",
@@ -1099,7 +1114,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
-  const trad401kFootnotes = [...payrollContributionFootnotes];
+  const trad401kFootnotes = [...k401WithdrawalFootnotes, ...payrollContributionFootnotes];
   if (!inputs.has401k) {
     trad401kFootnotes.push({
       severity: "unavailable",
@@ -1151,7 +1166,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     dependents: inputs.dependents,
   });
   const hsaContributionRate = inputs.hsaPayrollContribution ? 0 : payrollTaxRateOnBudget;
-  const hsaFootnotes = [...payrollContributionFootnotes];
+  const hsaFootnotes = [...hsaWithdrawalFootnotes, ...payrollContributionFootnotes];
   if (!inputs.hasHsa) {
     hsaFootnotes.push({
       severity: "unavailable",
@@ -1171,7 +1186,9 @@ function optimizeIncrementalRetirementDollar(inputs) {
     taxDueAtWithdrawal: hsaWithdrawalTax,
     currentTaxSavings: currentIncomeTaxOnBudget + hsaPayrollSavings,
     eligibilityNote: inputs.hasHsa ? "Requires HSA eligibility." : "Not modeled as available: HSA eligibility not selected.",
-    assumptions: "Modeled as nonmedical age-65+ withdrawal: ordinary income tax, no penalty. Payroll contributions add FICA savings when selected.",
+    assumptions: inputs.withdrawalAge >= 65
+      ? "Modeled as nonmedical age-65+ withdrawal: ordinary income tax, no penalty. Payroll contributions add FICA savings when selected."
+      : "Before age 65, HSA withdrawals generally need qualified medical expenses to avoid additional tax.",
     footnotes: hsaFootnotes,
     headerWarning: hsaFootnotes.some((note) => note.severity !== "info"),
     contributionUnavailable: !inputs.hasHsa,
@@ -1345,7 +1362,7 @@ function updateRetirementPretaxEquivalent(inputs) {
     filingStatus: inputs.filingStatus,
     dependents: inputs.dependents,
   });
-  output.textContent = `(${formatMoneyCents(pretaxIncome)} pretax)`;
+  output.textContent = `(baseline ${formatMoneyCents(pretaxIncome)} pretax before account withdrawal)`;
 }
 
 function renderResults() {
