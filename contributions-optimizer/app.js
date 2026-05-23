@@ -947,6 +947,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
       withdrawalEffectiveTaxRate: row.futureValueBeforeTax
         ? row.taxDueAtWithdrawal / row.futureValueBeforeTax
         : 0,
+      baselinePretaxIncomeBeforeWithdrawal: row.baselinePretaxIncomeBeforeWithdrawal ?? null,
       futureValueNoFeesOrTaxes: futureValue(inputs.pretaxBudget, years, inputs.annualReturn, 0),
       yearsToWithdrawal: years,
       footnotes: row.footnotes || [],
@@ -972,6 +973,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
 
   const rothIraContribution = afterTaxBudget;
   const rothIraFv = futureValue(rothIraContribution, years, inputs.annualReturn, inputs.retirementAccountExpense);
+  const [rothIraBaseline] = solveBaselineForKnownWithdrawal({
+    withdrawalCash: rothIraFv,
+    requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
+    state: inputs.retirementState,
+    filingStatus: inputs.filingStatus,
+    dependents: inputs.dependents,
+  });
   const rothIraFootnotes = [...rothWithdrawalFootnotes];
   if (rothIraFraction === 0) {
     rothIraFootnotes.push({
@@ -989,6 +998,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: rothIraContribution,
     futureValueBeforeTax: rothIraFv,
     futureValueAfterTax: rothIraFraction > 0 ? rothIraFv : null,
+    baselinePretaxIncomeBeforeWithdrawal: rothIraBaseline,
     taxDueAtWithdrawal: 0,
     currentTaxSavings: 0,
     eligibilityNote: rothIraEligibilityNote(inputs.currentIncome, inputs.filingStatus),
@@ -1047,6 +1057,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: tradIraContribution,
     futureValueBeforeTax: tradIraFv,
     futureValueAfterTax: tradIraFv - tradIraWithdrawalTax,
+    baselinePretaxIncomeBeforeWithdrawal: tradIraBaseline,
     taxDueAtWithdrawal: tradIraWithdrawalTax,
     currentTaxSavings: tradIraTaxSavings,
     eligibilityNote: traditionalIraEligibilityNote(iraDeductionFraction),
@@ -1066,6 +1077,14 @@ function optimizeIncrementalRetirementDollar(inputs) {
     inputs.annualReturn,
     inputs.retirementAccountExpense + inputs.employerPlanExtraExpense,
   );
+  const [roth401kBaseline] = solveBaselineForKnownWithdrawal({
+    withdrawalCash: roth401kFv,
+    requiredAfterTaxIncome: inputs.retirementIncome,
+    baselineLongTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
+    state: inputs.retirementState,
+    filingStatus: inputs.filingStatus,
+    dependents: inputs.dependents,
+  });
   const roth401kFootnotes = [...rothWithdrawalFootnotes, ...k401WithdrawalFootnotes, ...payrollContributionFootnotes];
   if (!inputs.has401k) {
     roth401kFootnotes.push({
@@ -1078,6 +1097,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: roth401kContribution,
     futureValueBeforeTax: roth401kFv,
     futureValueAfterTax: inputs.has401k ? roth401kFv : null,
+    baselinePretaxIncomeBeforeWithdrawal: roth401kBaseline,
     taxDueAtWithdrawal: 0,
     currentTaxSavings: 0,
     eligibilityNote: inputs.has401k ? "Requires access to a Roth 401k plan." : "Not modeled as available: no 401k access selected.",
@@ -1126,6 +1146,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: trad401kContribution,
     futureValueBeforeTax: trad401kFv,
     futureValueAfterTax: inputs.has401k ? trad401kFv - trad401kWithdrawalTax : null,
+    baselinePretaxIncomeBeforeWithdrawal: trad401kBaseline,
     taxDueAtWithdrawal: trad401kWithdrawalTax,
     currentTaxSavings: currentIncomeTaxOnBudget,
     eligibilityNote: inputs.has401k ? "Requires access to a traditional 401k plan." : "Not modeled as available: no 401k access selected.",
@@ -1183,6 +1204,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: hsaContribution,
     futureValueBeforeTax: hsaFv,
     futureValueAfterTax: inputs.hasHsa ? hsaFv - hsaWithdrawalTax : null,
+    baselinePretaxIncomeBeforeWithdrawal: hsaBaseline,
     taxDueAtWithdrawal: hsaWithdrawalTax,
     currentTaxSavings: currentIncomeTaxOnBudget + hsaPayrollSavings,
     eligibilityNote: inputs.hasHsa ? "Requires HSA eligibility." : "Not modeled as available: HSA eligibility not selected.",
@@ -1228,6 +1250,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     contributionToday: taxableContribution,
     futureValueBeforeTax: taxableFv,
     futureValueAfterTax: taxableFv - taxableFinalTax,
+    baselinePretaxIncomeBeforeWithdrawal: taxableBaselineIncome,
     taxDueAtWithdrawal: taxableFinalTax,
     currentTaxSavings: 0,
     eligibilityNote: "No account-specific eligibility restriction modeled.",
@@ -1352,17 +1375,14 @@ function accountCellClass(row, cellClass = "", unavailable = false) {
   ].filter(Boolean).join(" ");
 }
 
-function updateRetirementPretaxEquivalent(inputs) {
+function updateRetirementPretaxEquivalent(topAccount, footnoteNumber) {
   const output = document.getElementById("retirement-pretax-equivalent");
   if (!output) return;
-  const pretaxIncome = solvePretaxIncomeForAfterTaxIncome({
-    requiredAfterTaxIncome: inputs.retirementIncome,
-    longTermCapitalGainsShare: inputs.retirementLongTermCapitalGainsShare,
-    state: inputs.retirementState,
-    filingStatus: inputs.filingStatus,
-    dependents: inputs.dependents,
-  });
-  output.textContent = `(baseline ${formatMoneyCents(pretaxIncome)} pretax before account withdrawal)`;
+  if (!topAccount || topAccount.baselinePretaxIncomeBeforeWithdrawal === null) {
+    output.textContent = "";
+    return;
+  }
+  output.innerHTML = `(${formatMoneyCents(topAccount.baselinePretaxIncomeBeforeWithdrawal)} pretax if using ${escapeHtml(topAccount.account)}<sup>${footnoteNumber}</sup>)`;
 }
 
 function renderResults() {
@@ -1374,9 +1394,17 @@ function renderResults() {
 
   try {
     const inputs = getInputs();
-    updateRetirementPretaxEquivalent(inputs);
     const results = optimizeIncrementalRetirementDollar(inputs);
     const footnoteEntries = prepareFootnotes(results);
+    const best = results.find((row) => row.futureValueAfterTax !== null);
+    const topPretaxFootnoteNumber = footnoteEntries.length + 1;
+    footnoteEntries.push({
+      number: topPretaxFootnoteNumber,
+      text: best
+        ? `Pretax income estimate assumes the top-ranked account, ${best.account}, is used for the modeled account withdrawal.`
+        : "Pretax income estimate assumes the top-ranked available account is used for the modeled account withdrawal.",
+    });
+    updateRetirementPretaxEquivalent(best, topPretaxFootnoteNumber);
 
     const metrics = [
       ["Rank", (row) => String(row.rank), "rank-row"],
@@ -1449,7 +1477,6 @@ function renderResults() {
         </article>
       `;
     }).join("");
-    const best = results.find((row) => row.futureValueAfterTax !== null);
     topAccount.textContent = best ? `${best.account}: ${formatMoney(best.futureValueAfterTax)}` : "No available account";
     footnotes.innerHTML = footnoteEntries.map((note) => (
       `<p><sup>${note.number}</sup> ${escapeHtml(note.text)}</p>`
