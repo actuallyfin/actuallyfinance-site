@@ -12,14 +12,18 @@
     --ink: #172026;
     --muted: #60707c;
     --line: #d8e0e6;
-    --accent: #0f766e;
-    --accent-dark: #115e59;
+    --accent: #1e3a5f;
+    --accent-dark: #163150;
+    --accent-soft: #e8eef5;
     --shadow: 0 10px 28px rgba(31, 41, 55, 0.06);
   }
   * { box-sizing: border-box; }
   body {
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     margin: 0; background: var(--bg); color: var(--ink);
+  }
+  body::before {
+    content: ""; display: block; height: 6px; background: var(--accent);
   }
   header {
     background: #fff; color: var(--ink); padding: 18px 24px;
@@ -39,7 +43,7 @@
     padding: 18px; max-width: 1400px; margin: 0 auto;
   }
   .sidebar {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px;
     padding: 16px; height: fit-content; position: sticky; top: 18px;
     box-shadow: var(--shadow);
   }
@@ -80,7 +84,7 @@
   }
   .main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
   .panel {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px;
     padding: 16px 18px;
     box-shadow: var(--shadow);
   }
