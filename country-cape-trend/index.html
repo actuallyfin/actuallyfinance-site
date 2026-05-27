@@ -6,21 +6,31 @@
 <title>Country CAPE Rotation Backtest</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
+  :root {
+    --bg: #f6f8fa;
+    --panel: #ffffff;
+    --ink: #172026;
+    --muted: #60707c;
+    --line: #d8e0e6;
+    --accent: #0f766e;
+    --accent-dark: #115e59;
+    --shadow: 0 10px 28px rgba(31, 41, 55, 0.06);
+  }
   * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0; background: #f5f6fa; color: #222;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0; background: var(--bg); color: var(--ink);
   }
   header {
-    background: #fff; color: #172026; padding: 18px 24px;
-    border-bottom: 1px solid #d8e0e6;
+    background: #fff; color: var(--ink); padding: 18px 24px;
+    border-bottom: 1px solid var(--line);
     display: flex; justify-content: space-between; align-items: center;
     gap: 16px; flex-wrap: wrap;
   }
   header h1 { margin: 0; font-size: 22px; font-weight: 720; }
-  header .subtitle { font-size: 12.5px; color: #60707c; margin-top: 4px; }
+  header .subtitle { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
   header .home-link {
-    color: #0f766e; text-decoration: none; font-size: 13px; font-weight: 680;
+    color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 680;
     white-space: nowrap;
   }
   header .home-link:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -29,56 +39,63 @@
     padding: 18px; max-width: 1400px; margin: 0 auto;
   }
   .sidebar {
-    background: #fff; border: 1px solid #d0d7de; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
     padding: 16px; height: fit-content; position: sticky; top: 18px;
+    box-shadow: var(--shadow);
   }
   .sidebar h2 {
     margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: #1e3a5f;
+    letter-spacing: 0.06em; color: var(--accent-dark);
   }
   .form-group { margin-bottom: 14px; }
   .form-group label.field {
     display: block; font-size: 11.5px; font-weight: 600;
-    color: #444; margin-bottom: 5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 5px; text-transform: uppercase;
     letter-spacing: 0.03em;
   }
   .form-group select {
     width: 100%; padding: 7px 8px; font-size: 13px;
-    border: 1px solid #d0d7de; border-radius: 4px; background: #fff;
+    border: 1px solid var(--line); border-radius: 6px; background: #fff;
+  }
+  .form-group select:focus {
+    outline: 2px solid rgba(15, 118, 110, 0.22);
+    border-color: var(--accent);
   }
   .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
   .checkbox-group label {
     font-size: 13px; display: flex; align-items: center;
     gap: 7px; cursor: pointer; padding: 2px 0;
   }
+  .checkbox-group input { accent-color: var(--accent); }
   button.primary {
-    background: #1e3a5f; color: #fff; border: none;
+    background: var(--accent); color: #fff; border: none;
     padding: 10px 14px; font-size: 12.5px; font-weight: 600;
-    border-radius: 4px; cursor: pointer; width: 100%;
+    border-radius: 6px; cursor: pointer; width: 100%;
     text-transform: uppercase; letter-spacing: 0.04em;
   }
-  button.primary:hover { background: #274a74; }
+  button.primary:hover { background: var(--accent-dark); }
   .note {
-    font-size: 11.5px; color: #57606a; margin-top: 12px;
-    line-height: 1.5; padding-top: 12px; border-top: 1px solid #eaeef2;
+    font-size: 11.5px; color: var(--muted); margin-top: 12px;
+    line-height: 1.5; padding-top: 12px; border-top: 1px solid var(--line);
   }
   .main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
   .panel {
-    background: #fff; border: 1px solid #d0d7de; border-radius: 6px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
     padding: 16px 18px;
+    box-shadow: var(--shadow);
   }
   .panel h3 {
     margin: 0 0 14px 0; font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: #1e3a5f;
-    border-bottom: 1px solid #eaeef2; padding-bottom: 8px;
+    letter-spacing: 0.06em; color: var(--accent-dark);
+    border-bottom: 1px solid var(--line); padding-bottom: 8px;
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table th, table td {
     text-align: left; padding: 8px 10px;
-    border-bottom: 1px solid #eaeef2;
+    border-bottom: 1px solid var(--line);
   }
   table th {
-    background: #f6f8fa; font-weight: 600; color: #57606a;
+    background: #eef3ef; font-weight: 600; color: var(--muted);
     text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.04em;
   }
   table td.num, table th.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -94,22 +111,22 @@
     margin-right: 7px; vertical-align: middle;
   }
   .chart-wrap { position: relative; height: 440px; }
-  #loading { padding: 60px; text-align: center; color: #57606a; font-size: 14px; }
+  #loading { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
   .pos { color: #0a7d2e; }
   .neg { color: #c1121f; }
   .glossary details {
-    border-top: 1px solid #eaeef2; padding: 10px 0;
+    border-top: 1px solid var(--line); padding: 10px 0;
   }
   .glossary details:first-of-type { border-top: none; padding-top: 4px; }
   .glossary summary {
     cursor: pointer; font-weight: 600; font-size: 13px;
-    color: #1e3a5f; padding: 4px 0;
+    color: var(--accent-dark); padding: 4px 0;
     list-style: none;
   }
   .glossary summary::-webkit-details-marker { display: none; }
   .glossary summary::before {
-    content: "▸"; display: inline-block; width: 14px;
-    color: #57606a; font-size: 11px;
+    content: "\25b8"; display: inline-block; width: 14px;
+    color: var(--muted); font-size: 11px;
     transition: transform 0.15s ease;
   }
   .glossary details[open] summary::before { transform: rotate(90deg); }
@@ -120,14 +137,14 @@
     font-size: 13px; line-height: 1.5;
   }
   .glossary dt {
-    font-weight: 600; color: #1e3a5f;
+    font-weight: 600; color: var(--accent-dark);
   }
   .glossary dd {
-    margin: 0; color: #333;
+    margin: 0; color: var(--ink);
   }
   .glossary p { font-size: 13px; line-height: 1.5; }
-  .glossary a { color: #1e3a5f; text-decoration: underline; word-break: break-word; }
-  .glossary a:hover { color: #0a9396; }
+  .glossary a { color: var(--accent); text-decoration: underline; word-break: break-word; }
+  .glossary a:hover { color: var(--accent-dark); }
   .resources ul { margin: 10px 0 4px 18px; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
   .resources li { margin-bottom: 8px; }
   @media (max-width: 720px) {
