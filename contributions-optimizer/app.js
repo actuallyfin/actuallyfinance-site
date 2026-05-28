@@ -760,7 +760,7 @@ function rothIraEligibilityNote(income, filingStatus) {
   const [lower, upper] = limits;
   if (income <= lower) return "Direct Roth IRA contribution appears income-eligible.";
   if (income < upper) return "Direct Roth IRA contribution may be partially income-limited.";
-  return "Direct Roth IRA contribution appears income-ineligible; backdoor Roth not modeled.";
+  return "Direct Roth IRA contribution appears income-ineligible; consider a backdoor Roth IRA contribution.";
 }
 
 function rothIraContributionFraction(income, filingStatus) {
@@ -978,7 +978,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
   if (rothIraFraction === 0) {
     rothIraFootnotes.push({
       severity: "unavailable",
-      text: "Direct Roth IRA contribution appears income-ineligible; backdoor Roth is not modeled.",
+      text: "Direct Roth IRA contribution appears income-ineligible; consider a backdoor Roth IRA contribution.",
     });
   } else if (rothIraFraction < 1) {
     rothIraFootnotes.push({
@@ -990,7 +990,7 @@ function optimizeIncrementalRetirementDollar(inputs) {
     account: "Roth IRA",
     contributionToday: rothIraContribution,
     futureValueBeforeTax: rothIraFv,
-    futureValueAfterTax: rothIraFraction > 0 ? rothIraFv : null,
+    futureValueAfterTax: rothIraFv,
     baselinePretaxIncomeBeforeWithdrawal: rothIraBaseline,
     taxDueAtWithdrawal: 0,
     currentTaxSavings: 0,
