@@ -1424,6 +1424,7 @@ function renderGrowthChart(container, inputs, results) {
     account: row.account,
     color: CHART_COLORS[index % CHART_COLORS.length],
     points: [{ year: 0, value: inputs.pretaxBudget }],
+    taxDrop: Math.max(0, (row.futureValueBeforeTax || 0) - (row.futureValueAfterTax || 0)),
   }));
   const seriesByAccount = new Map(series.map((item) => [item.account, item]));
 
@@ -1437,7 +1438,10 @@ function renderGrowthChart(container, inputs, results) {
     yearResults.forEach((row) => {
       const accountSeries = seriesByAccount.get(row.account);
       if (!accountSeries || row.futureValueAfterTax === null) return;
-      accountSeries.points.push({ year, value: row.futureValueAfterTax });
+      accountSeries.points.push({ year, value: row.futureValueBeforeTax });
+      if (year === years && Math.abs(row.futureValueBeforeTax - row.futureValueAfterTax) > 0.5) {
+        accountSeries.points.push({ year, value: row.futureValueAfterTax });
+      }
     });
   }
 
@@ -1491,7 +1495,7 @@ function renderGrowthChart(container, inputs, results) {
     return `
       <div class="chart-legend-item">
         <span class="chart-legend-swatch" style="background:${item.color}"></span>
-        <span>${escapeHtml(item.account)} <span class="chart-legend-value">${formatMoney(finalPoint.value)}</span></span>
+        <span>${escapeHtml(item.account)} <span class="chart-legend-value">${formatMoney(finalPoint.value)}${item.taxDrop > 0.5 ? ` after ${formatMoney(item.taxDrop)} withdrawal tax` : ""}</span></span>
       </div>
     `;
   }).join("");
@@ -1499,7 +1503,7 @@ function renderGrowthChart(container, inputs, results) {
   container.innerHTML = `
     <div class="growth-chart-header">
       <h2>Projected growth over time</h2>
-      <span>Starts at ${formatMoney(inputs.pretaxBudget)} pretax equivalent; endpoints match after-tax withdrawal value.</span>
+      <span>Starts at ${formatMoney(inputs.pretaxBudget)} pretax equivalent; lines then drop to after-tax withdrawal value.</span>
     </div>
     <svg role="img" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-label="Projected growth paths for retirement account choices">
       <line class="chart-axis" x1="${margin.left}" y1="${margin.top + plotHeight}" x2="${chartWidth - margin.right}" y2="${margin.top + plotHeight}"></line>
