@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Retirement Contributions Optimizer</title>
   <meta name="description" content="Rank retirement account contributions by projected after-tax value across IRA, 401k, HSA, and taxable brokerage accounts.">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260527-top-context">
 </head>
 <body>
   <main class="shell">
@@ -18,6 +18,7 @@
       <div class="top-result" aria-live="polite">
         <span>Top account</span>
         <strong id="top-account">Loading...</strong>
+        <small id="top-account-context"></small>
       </div>
     </header>
 
@@ -136,6 +137,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260523-pretax-note-cleanup"></script>
+  <script src="app.js?v=20260527-top-context"></script>
 </body>
 </html>

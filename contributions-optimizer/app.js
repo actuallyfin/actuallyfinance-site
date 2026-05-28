@@ -1383,6 +1383,7 @@ function renderResults() {
   const table = document.getElementById("results-table");
   const cards = document.getElementById("results-cards");
   const topAccount = document.getElementById("top-account");
+  const topAccountContext = document.getElementById("top-account-context");
   const footnotes = document.getElementById("footnotes");
 
   try {
@@ -1469,6 +1470,9 @@ function renderResults() {
       `;
     }).join("");
     topAccount.textContent = best ? `${best.account}: ${formatMoney(best.futureValueAfterTax)}` : "No available account";
+    if (topAccountContext) {
+      topAccountContext.textContent = best ? `End value of ${formatMoney(inputs.pretaxBudget)} contribution` : "";
+    }
     footnotes.innerHTML = footnoteEntries.map((note) => (
       `<p><sup>${note.number}</sup> ${escapeHtml(note.text)}</p>`
     )).join("");
@@ -1476,6 +1480,7 @@ function renderResults() {
     table.innerHTML = `<tbody><tr><td>Error</td><td>${escapeHtml(error.message)}</td></tr></tbody>`;
     cards.innerHTML = `<article class="result-card"><strong>Error</strong><p>${escapeHtml(error.message)}</p></article>`;
     topAccount.textContent = "Check inputs";
+    if (topAccountContext) topAccountContext.textContent = "";
     footnotes.innerHTML = "";
   }
 }
