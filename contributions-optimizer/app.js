@@ -1403,8 +1403,8 @@ function renderResults() {
     const metrics = [
       ["Rank", (row) => String(row.rank), "rank-row"],
       ["Available after withdrawal", (row) => formatMoney(row.futureValueAfterTax)],
-      ["Pretax contribution today", (row) => formatMoney(row.pretaxIncomeContributionToday)],
-      ["Post-tax contribution today", (row) => formatMoney(row.postTaxContributionToday)],
+      ["Contribution pretax equivalent", (row) => formatMoney(row.pretaxIncomeContributionToday)],
+      ["Actual contribution amount", (row) => formatMoney(row.postTaxContributionToday)],
       ["Contribution effective tax rate", (row) => formatPercent(row.contributionEffectiveTaxRate)],
       ["Contribution lowest effective tax rate", (row) => formatPercent(row.contributionLowestEffectiveTaxRate)],
       ["Contribution highest effective tax rate", (row) => formatPercent(row.contributionHighestEffectiveTaxRate)],
@@ -1453,8 +1453,8 @@ function renderResults() {
             <strong>${formatMoney(row.futureValueAfterTax)}</strong>
           </div>
           <dl class="mobile-metrics">
-            <div><dt>Pretax contribution today</dt><dd>${formatMoney(row.pretaxIncomeContributionToday)}</dd></div>
-            <div><dt>Post-tax contribution today</dt><dd>${formatMoney(row.postTaxContributionToday)}</dd></div>
+            <div><dt>Contribution pretax equivalent</dt><dd>${formatMoney(row.pretaxIncomeContributionToday)}</dd></div>
+            <div><dt>Actual contribution amount</dt><dd>${formatMoney(row.postTaxContributionToday)}</dd></div>
             <div><dt>Contribution tax rate</dt><dd>${formatPercent(row.contributionEffectiveTaxRate)}</dd></div>
             <div><dt>Future value before tax</dt><dd>${formatMoney(row.futureValueBeforeTax)}</dd></div>
             <div><dt>Tax due at withdrawal</dt><dd>${formatMoney(row.taxDueAtWithdrawal)}</dd></div>
