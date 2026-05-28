@@ -430,6 +430,13 @@ td.account-unavailable-cell.note-cell {
   stroke: var(--line);
 }
 
+.chart-axis-break {
+  fill: none;
+  stroke: var(--muted);
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
 .chart-axis-label,
 .chart-tick-label {
   fill: var(--muted);

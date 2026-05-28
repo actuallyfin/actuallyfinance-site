@@ -1453,15 +1453,37 @@ function renderGrowthChart(container, inputs, results) {
   const allValues = series.flatMap((item) => item.points.map((point) => point.value));
   const maxValue = Math.max(inputs.pretaxBudget, ...allValues, 1);
   const yMax = maxValue * 1.08;
-  const xForYear = (year) => margin.left + (year / years) * plotWidth;
+  const earlyEndYear = Math.min(3, years);
+  const lateStartYear = Math.max(earlyEndYear, years - 3);
+  const hasAxisBreak = lateStartYear > earlyEndYear;
+  const gapWidth = hasAxisBreak ? 70 : 0;
+  const segmentWidth = hasAxisBreak ? (plotWidth - gapWidth) / 2 : plotWidth;
+  const xForYear = (year) => {
+    if (!hasAxisBreak) return margin.left + (year / years) * plotWidth;
+    if (year <= earlyEndYear) return margin.left + (year / earlyEndYear) * segmentWidth;
+    if (year >= lateStartYear) {
+      return margin.left
+        + segmentWidth
+        + gapWidth
+        + ((year - lateStartYear) / (years - lateStartYear)) * segmentWidth;
+    }
+    return null;
+  };
   const yForValue = (value) => margin.top + plotHeight - (Math.max(0, value) / yMax) * plotHeight;
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((share) => yMax * share);
   const midpointYear = Math.round(years / 2);
-  const xTicks = uniqueChartTicks([
-    { year: 0, label: `Age ${inputs.currentAge}` },
-    { year: midpointYear, label: `Age ${inputs.currentAge + midpointYear}` },
-    { year: years, label: `Age ${inputs.withdrawalAge}` },
-  ]);
+  const xTicks = hasAxisBreak
+    ? uniqueChartTicks([
+      { year: 0, label: `Age ${inputs.currentAge}` },
+      { year: earlyEndYear, label: `Age ${inputs.currentAge + earlyEndYear}` },
+      { year: lateStartYear, label: `Age ${inputs.currentAge + lateStartYear}` },
+      { year: years, label: `Age ${inputs.withdrawalAge}` },
+    ])
+    : uniqueChartTicks([
+      { year: 0, label: `Age ${inputs.currentAge}` },
+      { year: midpointYear, label: `Age ${inputs.currentAge + midpointYear}` },
+      { year: years, label: `Age ${inputs.withdrawalAge}` },
+    ]);
 
   const grid = yTicks.map((tick) => {
     const y = yForValue(tick);
@@ -1480,12 +1502,21 @@ function renderGrowthChart(container, inputs, results) {
   }).join("");
 
   const lines = series.map((item) => {
-    const points = item.points
-      .map((point) => `${xForYear(point.year).toFixed(2)},${yForValue(point.value).toFixed(2)}`)
-      .join(" ");
+    const pointSegments = hasAxisBreak
+      ? [
+        item.points.filter((point) => point.year <= earlyEndYear),
+        item.points.filter((point) => point.year >= lateStartYear),
+      ].filter((segment) => segment.length > 1)
+      : [item.points];
+    const paths = pointSegments.map((segment) => {
+      const points = segment
+        .map((point) => `${xForYear(point.year).toFixed(2)},${yForValue(point.value).toFixed(2)}`)
+        .join(" ");
+      return `<polyline class="chart-line" points="${points}" stroke="${item.color}"></polyline>`;
+    }).join("");
     const finalPoint = item.points[item.points.length - 1];
     return `
-      <polyline class="chart-line" points="${points}" stroke="${item.color}"></polyline>
+      ${paths}
       <circle class="chart-endpoint" cx="${xForYear(finalPoint.year).toFixed(2)}" cy="${yForValue(finalPoint.value).toFixed(2)}" r="4.5" fill="${item.color}"></circle>
     `;
   }).join("");
@@ -1500,16 +1531,24 @@ function renderGrowthChart(container, inputs, results) {
     `;
   }).join("");
 
+  const axisBreak = hasAxisBreak
+    ? `
+      <text class="chart-tick-label" x="${(margin.left + segmentWidth + gapWidth / 2).toFixed(2)}" y="${(margin.top + plotHeight + 24).toFixed(2)}" text-anchor="middle">...</text>
+      <path class="chart-axis-break" d="M ${(margin.left + segmentWidth + gapWidth / 2 - 10).toFixed(2)} ${(margin.top + plotHeight - 7).toFixed(2)} l 8 14 M ${(margin.left + segmentWidth + gapWidth / 2 + 2).toFixed(2)} ${(margin.top + plotHeight - 7).toFixed(2)} l 8 14"></path>
+    `
+    : "";
+
   container.innerHTML = `
     <div class="growth-chart-header">
       <h2>Projected growth over time</h2>
-      <span>Starts at ${formatMoney(inputs.pretaxBudget)} pretax equivalent; lines then drop to after-tax withdrawal value.</span>
+      <span>Shows first 3 and last 3 years; lines then drop to after-tax withdrawal value.</span>
     </div>
     <svg role="img" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-label="Projected growth paths for retirement account choices">
       <line class="chart-axis" x1="${margin.left}" y1="${margin.top + plotHeight}" x2="${chartWidth - margin.right}" y2="${margin.top + plotHeight}"></line>
       <line class="chart-axis" x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + plotHeight}"></line>
       ${grid}
       ${xAxisTicks}
+      ${axisBreak}
       ${lines}
       <text class="chart-axis-label" x="${margin.left + plotWidth / 2}" y="${chartHeight - 10}" text-anchor="middle">Age</text>
     </svg>
