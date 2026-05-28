@@ -38,6 +38,15 @@ const moneyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+const CHART_COLORS = [
+  "#7c3f58",
+  "#0f766e",
+  "#2f5f9f",
+  "#8a5a00",
+  "#6f5bb5",
+  "#4f6f52",
+];
+
 function parseNumber(value) {
   if (value === undefined || value === null || value === "") return null;
   const parsed = Number(value);
@@ -1378,12 +1387,139 @@ function assumptionDetails(row) {
   return `<details class="assumption-details"><summary>Show</summary><p>${escapeHtml(row.assumptions)}</p></details>`;
 }
 
+function formatCompactMoney(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "N/A";
+  const amount = Math.abs(value);
+  if (amount >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (amount >= 10000) return `$${Math.round(value / 1000)}k`;
+  if (amount >= 1000) return `$${(value / 1000).toFixed(1)}k`;
+  return `$${Math.round(value)}`;
+}
+
+function uniqueChartTicks(ticks) {
+  const seen = new Set();
+  return ticks.filter((tick) => {
+    const key = `${tick.year}-${tick.label}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderGrowthChart(container, inputs, results) {
+  if (!container) return;
+  const availableResults = results.filter((row) => row.futureValueAfterTax !== null);
+  const years = Math.max(0, inputs.withdrawalAge - inputs.currentAge);
+  if (!availableResults.length || years <= 0) {
+    container.innerHTML = `
+      <div class="growth-chart-header">
+        <h2>Projected growth over time</h2>
+        <span>Choose a later withdrawal age to show a growth path.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const series = availableResults.map((row, index) => ({
+    account: row.account,
+    color: CHART_COLORS[index % CHART_COLORS.length],
+    points: [{ year: 0, value: inputs.pretaxBudget }],
+  }));
+  const seriesByAccount = new Map(series.map((item) => [item.account, item]));
+
+  for (let year = 1; year <= years; year += 1) {
+    const yearResults = year === years
+      ? results
+      : optimizeIncrementalRetirementDollar({
+        ...inputs,
+        withdrawalAge: inputs.currentAge + year,
+      });
+    yearResults.forEach((row) => {
+      const accountSeries = seriesByAccount.get(row.account);
+      if (!accountSeries || row.futureValueAfterTax === null) return;
+      accountSeries.points.push({ year, value: row.futureValueAfterTax });
+    });
+  }
+
+  const chartWidth = 920;
+  const chartHeight = 340;
+  const margin = { top: 24, right: 22, bottom: 54, left: 72 };
+  const plotWidth = chartWidth - margin.left - margin.right;
+  const plotHeight = chartHeight - margin.top - margin.bottom;
+  const allValues = series.flatMap((item) => item.points.map((point) => point.value));
+  const maxValue = Math.max(inputs.pretaxBudget, ...allValues, 1);
+  const yMax = maxValue * 1.08;
+  const xForYear = (year) => margin.left + (year / years) * plotWidth;
+  const yForValue = (value) => margin.top + plotHeight - (Math.max(0, value) / yMax) * plotHeight;
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((share) => yMax * share);
+  const midpointYear = Math.round(years / 2);
+  const xTicks = uniqueChartTicks([
+    { year: 0, label: `Age ${inputs.currentAge}` },
+    { year: midpointYear, label: `Age ${inputs.currentAge + midpointYear}` },
+    { year: years, label: `Age ${inputs.withdrawalAge}` },
+  ]);
+
+  const grid = yTicks.map((tick) => {
+    const y = yForValue(tick);
+    return `
+      <line class="chart-grid" x1="${margin.left}" y1="${y.toFixed(2)}" x2="${chartWidth - margin.right}" y2="${y.toFixed(2)}"></line>
+      <text class="chart-tick-label" x="${margin.left - 10}" y="${(y + 4).toFixed(2)}" text-anchor="end">${formatCompactMoney(tick)}</text>
+    `;
+  }).join("");
+
+  const xAxisTicks = xTicks.map((tick) => {
+    const x = xForYear(tick.year);
+    return `
+      <line class="chart-axis" x1="${x.toFixed(2)}" y1="${margin.top + plotHeight}" x2="${x.toFixed(2)}" y2="${margin.top + plotHeight + 5}"></line>
+      <text class="chart-tick-label" x="${x.toFixed(2)}" y="${margin.top + plotHeight + 24}" text-anchor="middle">${escapeHtml(tick.label)}</text>
+    `;
+  }).join("");
+
+  const lines = series.map((item) => {
+    const points = item.points
+      .map((point) => `${xForYear(point.year).toFixed(2)},${yForValue(point.value).toFixed(2)}`)
+      .join(" ");
+    const finalPoint = item.points[item.points.length - 1];
+    return `
+      <polyline class="chart-line" points="${points}" stroke="${item.color}"></polyline>
+      <circle class="chart-endpoint" cx="${xForYear(finalPoint.year).toFixed(2)}" cy="${yForValue(finalPoint.value).toFixed(2)}" r="4.5" fill="${item.color}"></circle>
+    `;
+  }).join("");
+
+  const legend = series.map((item) => {
+    const finalPoint = item.points[item.points.length - 1];
+    return `
+      <div class="chart-legend-item">
+        <span class="chart-legend-swatch" style="background:${item.color}"></span>
+        <span>${escapeHtml(item.account)} <span class="chart-legend-value">${formatMoney(finalPoint.value)}</span></span>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="growth-chart-header">
+      <h2>Projected growth over time</h2>
+      <span>Starts at ${formatMoney(inputs.pretaxBudget)} pretax equivalent; endpoints match after-tax withdrawal value.</span>
+    </div>
+    <svg role="img" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-label="Projected growth paths for retirement account choices">
+      <line class="chart-axis" x1="${margin.left}" y1="${margin.top + plotHeight}" x2="${chartWidth - margin.right}" y2="${margin.top + plotHeight}"></line>
+      <line class="chart-axis" x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + plotHeight}"></line>
+      ${grid}
+      ${xAxisTicks}
+      ${lines}
+      <text class="chart-axis-label" x="${margin.left + plotWidth / 2}" y="${chartHeight - 10}" text-anchor="middle">Age</text>
+    </svg>
+    <div class="chart-legend">${legend}</div>
+  `;
+}
+
 function renderResults() {
   syncRangeOutputs();
   const table = document.getElementById("results-table");
   const cards = document.getElementById("results-cards");
   const topAccount = document.getElementById("top-account");
   const topAccountContext = document.getElementById("top-account-context");
+  const growthChart = document.getElementById("growth-chart");
   const footnotes = document.getElementById("footnotes");
 
   try {
@@ -1473,6 +1609,7 @@ function renderResults() {
     if (topAccountContext) {
       topAccountContext.textContent = best ? `End value of ${formatMoney(inputs.pretaxBudget)} contribution` : "";
     }
+    renderGrowthChart(growthChart, inputs, results);
     footnotes.innerHTML = footnoteEntries.map((note) => (
       `<p><sup>${note.number}</sup> ${escapeHtml(note.text)}</p>`
     )).join("");
@@ -1481,6 +1618,7 @@ function renderResults() {
     cards.innerHTML = `<article class="result-card"><strong>Error</strong><p>${escapeHtml(error.message)}</p></article>`;
     topAccount.textContent = "Check inputs";
     if (topAccountContext) topAccountContext.textContent = "";
+    if (growthChart) growthChart.innerHTML = "";
     footnotes.innerHTML = "";
   }
 }
