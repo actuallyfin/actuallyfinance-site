@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Retirement Contributions Optimizer</title>
   <meta name="description" content="Rank retirement account contributions by projected after-tax value across IRA, 401k, HSA, and taxable brokerage accounts.">
-  <link rel="stylesheet" href="styles.css?v=20260527-plum-accent">
+  <link rel="stylesheet" href="styles.css?v=20260528-input-spacing">
 </head>
 <body>
   <main class="shell">
@@ -24,43 +24,47 @@
 
     <section class="layout" aria-label="Optimizer inputs and results">
       <form class="input-panel" id="optimizer-form">
-        <div class="field-grid">
-          <label>
+        <div class="field-columns">
+          <div class="field-stack">
+          <label class="field-current-income">
             <span>Current income ($/year)</span>
             <input id="current-income" name="currentIncome" type="number" min="0" step="5000" value="85000">
           </label>
-          <label>
-            <span>Required after-tax retirement income ($/year)</span>
-            <input id="retirement-income" name="retirementIncome" type="number" min="0" step="5000" value="75000">
-            <small class="input-note" id="retirement-pretax-equivalent"></small>
-          </label>
-          <label>
+          <label class="field-filing-status">
             <span>Filing status</span>
             <select id="filing-status" name="filingStatus">
               <option value="single">Single</option>
               <option value="married_filing_jointly" selected>Married filing jointly</option>
             </select>
           </label>
-          <label>
-            <span>Dependents (count)</span>
-            <input id="dependents" name="dependents" type="number" min="0" step="1" value="0">
-          </label>
-          <label>
+          <label class="field-current-state">
             <span>Current state</span>
             <select id="current-state" name="currentState"></select>
           </label>
-          <label>
-            <span>Retirement state</span>
-            <select id="retirement-state" name="retirementState"></select>
-          </label>
-          <label>
+          <label class="field-current-age">
             <span>Current age (years)</span>
             <input id="current-age" name="currentAge" type="number" min="0" max="120" step="1" value="35">
           </label>
-          <label>
+          </div>
+          <div class="field-stack">
+          <label class="field-retirement-income">
+            <span>Required after-tax retirement income ($/year)</span>
+            <input id="retirement-income" name="retirementIncome" type="number" min="0" step="5000" value="75000">
+            <small class="input-note" id="retirement-pretax-equivalent"></small>
+          </label>
+          <label class="field-dependents">
+            <span>Dependents (count)</span>
+            <input id="dependents" name="dependents" type="number" min="0" step="1" value="0">
+          </label>
+          <label class="field-retirement-state">
+            <span>Retirement state</span>
+            <select id="retirement-state" name="retirementState"></select>
+          </label>
+          <label class="field-withdrawal-age">
             <span>Planned withdrawal age (years)</span>
             <input id="withdrawal-age" name="withdrawalAge" type="number" min="0" max="120" step="1" value="65">
           </label>
+          </div>
         </div>
 
         <details class="advanced">

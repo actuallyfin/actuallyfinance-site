@@ -144,6 +144,18 @@ h1 {
   gap: 12px;
 }
 
+.field-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.field-stack {
+  display: grid;
+  gap: 12px;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -536,9 +548,46 @@ td.account-unavailable-cell.note-cell {
     padding: 12px;
   }
 
-  .field-grid {
+  .field-grid,
+  .field-columns {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .field-stack {
+    display: contents;
+  }
+
+  .field-current-income {
+    order: 1;
+  }
+
+  .field-retirement-income {
+    order: 2;
+  }
+
+  .field-filing-status {
+    order: 3;
+  }
+
+  .field-dependents {
+    order: 4;
+  }
+
+  .field-current-state {
+    order: 5;
+  }
+
+  .field-retirement-state {
+    order: 6;
+  }
+
+  .field-current-age {
+    order: 7;
+  }
+
+  .field-withdrawal-age {
+    order: 8;
   }
 
   label span {
