@@ -1622,16 +1622,18 @@ function renderGrowthChart(container, inputs, results) {
       yMax: Math.max(inputs.pretaxBudget, contribution, noFeeFutureValue, futureBeforeTax, futureAfterTax + withdrawalTax, 1) * 1.16,
     };
   };
-  const areaPath = ({ x, y, width, height, startValue, peakValue, endValue, yFor }) => {
-    const base = y + height;
-    const peakX = x + width * 0.68;
+  const areaPath = ({ points, base, yFor }) => `
+    M ${points[0].x.toFixed(2)} ${base.toFixed(2)}
+    ${points.map((point, index) => (
+    `${index === 0 ? "L" : "L"} ${point.x.toFixed(2)} ${yFor(point.value).toFixed(2)}`
+  )).join(" ")}
+    L ${points[points.length - 1].x.toFixed(2)} ${base.toFixed(2)}
+    Z
+  `;
+  const subtractionPath = ({ points, yFor }) => {
+    if (!points.length) return "";
     return `
-      M ${x} ${base}
-      L ${x} ${yFor(startValue)}
-      C ${x + width * 0.16} ${yFor(startValue * 0.97)}, ${x + width * 0.36} ${yFor(startValue * 1.18)}, ${peakX} ${yFor(peakValue)}
-      C ${x + width * 0.78} ${yFor(peakValue * 0.98)}, ${x + width * 0.91} ${yFor((peakValue + endValue) / 2)}, ${x + width} ${yFor(endValue)}
-      L ${x + width} ${base}
-      Z
+      <path d="M ${points.map((point) => `${point.x.toFixed(2)} ${yFor(point.value).toFixed(2)}`).join(" L ")} Z" fill="${removedColor}"></path>
     `;
   };
   const leader = ({ startX, startY, targetX, targetY, color }) => {
@@ -1681,65 +1683,71 @@ function renderGrowthChart(container, inputs, results) {
       ${note ? `<text class="retained-callout-note" x="${x + 10}" y="${y + 47}">${escapeHtml(note)}</text>` : ""}
     `;
   };
-  const wedge = ({ kind, x, yFor, width, startValue, peakValue, endValue, amount }) => {
-    if (amount <= 0.5) return "";
-    if (kind === "contribution") {
-      const top = yFor(startValue + amount * 0.58);
-      const bottom = yFor(startValue);
-      return `
-        <path d="M ${x.toFixed(2)} ${top.toFixed(2)}
-          C ${(x + width * 0.04).toFixed(2)} ${(top + 3).toFixed(2)}, ${(x + width * 0.1).toFixed(2)} ${(bottom - 3).toFixed(2)}, ${(x + width * 0.15).toFixed(2)} ${bottom.toFixed(2)}
-          L ${(x + width * 0.15).toFixed(2)} ${(bottom + 10).toFixed(2)}
-          C ${(x + width * 0.08).toFixed(2)} ${(bottom + 7).toFixed(2)}, ${(x + width * 0.03).toFixed(2)} ${(bottom + 4).toFixed(2)}, ${x.toFixed(2)} ${(bottom + 2).toFixed(2)}
-          Z" fill="${removedColor}" opacity="0.88"></path>
-      `;
-    }
-    if (kind === "drag") {
-      const top = yFor(peakValue + amount * 0.24);
-      const bottom = yFor(peakValue);
-      return `
-        <path d="M ${(feeX - width * 0.07).toFixed(2)} ${top.toFixed(2)}
-          C ${(feeX - width * 0.02).toFixed(2)} ${(top + 3).toFixed(2)}, ${(feeX + width * 0.04).toFixed(2)} ${(bottom - 4).toFixed(2)}, ${(feeX + width * 0.1).toFixed(2)} ${bottom.toFixed(2)}
-          L ${(feeX + width * 0.1).toFixed(2)} ${(bottom + 11).toFixed(2)}
-          C ${(feeX + width * 0.03).toFixed(2)} ${(bottom + 8).toFixed(2)}, ${(feeX - width * 0.04).toFixed(2)} ${(bottom + 5).toFixed(2)}, ${(feeX - width * 0.07).toFixed(2)} ${(bottom + 1).toFixed(2)}
-          Z" fill="${removedColor}" opacity="0.88"></path>
-      `;
-    }
-    const top = yFor(endValue + amount);
-    const bottom = yFor(endValue);
-    return `
-      <path d="M ${(withdrawalTaxX - width * 0.1).toFixed(2)} ${top.toFixed(2)}
-        L ${(x + width).toFixed(2)} ${top.toFixed(2)}
-        L ${(x + width).toFixed(2)} ${bottom.toFixed(2)}
-        C ${(x + width * 0.98).toFixed(2)} ${(bottom - 12).toFixed(2)}, ${(withdrawalTaxX - width * 0.04).toFixed(2)} ${(bottom - 27).toFixed(2)}, ${(withdrawalTaxX - width * 0.1).toFixed(2)} ${(bottom - 38).toFixed(2)}
-        Z" fill="${removedColor}" opacity="0.92"></path>
-    `;
-  };
   const rows = availableResults.map((row, index) => {
     const modeled = modelChartRow(row);
     const rowTop = rowStart + index * rowHeight;
     const y = rowTop + 44;
     const base = y + graphHeight;
     const yFor = (value) => base - (value / modeled.yMax) * graphHeight * 0.92;
+    const startX = graphX;
+    const investedX = currentTaxX;
+    const peakX = graphX + graphWidth * 0.68;
+    const feeEndX = graphX + graphWidth * 0.84;
+    const taxStartX = withdrawalTaxX - graphWidth * 0.06;
+    const endX = graphX + graphWidth;
+    const taxStartProgress = (taxStartX - feeEndX) / Math.max(1, endX - feeEndX);
+    const valueAtTaxStart = modeled.futureBeforeTax
+      + (modeled.futureAfterTax - modeled.futureBeforeTax) * Math.max(0, Math.min(1, taxStartProgress));
+    const retainedPoints = [
+      { x: startX, value: modeled.contribution },
+      { x: investedX, value: modeled.contribution },
+      { x: peakX, value: modeled.futureBeforeTax },
+      { x: feeEndX, value: modeled.futureBeforeTax },
+      { x: endX, value: modeled.futureAfterTax },
+    ];
+    const contributionTaxArea = modeled.contributionTax > 0.5
+      ? subtractionPath({
+        yFor,
+        points: [
+          { x: startX, value: inputs.pretaxBudget },
+          { x: investedX, value: inputs.pretaxBudget },
+          { x: investedX, value: modeled.contribution },
+          { x: startX, value: modeled.contribution },
+        ],
+      })
+      : "";
+    const dragArea = modeled.drag > 0.5
+      ? subtractionPath({
+        yFor,
+        points: [
+          { x: peakX, value: modeled.noFeeFutureValue },
+          { x: feeEndX, value: modeled.noFeeFutureValue },
+          { x: feeEndX, value: modeled.futureBeforeTax },
+          { x: peakX, value: modeled.futureBeforeTax },
+        ],
+      })
+      : "";
+    const withdrawalTaxArea = modeled.withdrawalTax > 0.5
+      ? subtractionPath({
+        yFor,
+        points: [
+          { x: taxStartX, value: modeled.futureBeforeTax },
+          { x: endX, value: modeled.futureBeforeTax },
+          { x: endX, value: modeled.futureAfterTax },
+          { x: taxStartX, value: valueAtTaxStart },
+        ],
+      })
+      : "";
     const showContributionTax = modeled.contributionTax > 0.5;
     const showWithdrawalTax = modeled.withdrawalTax > 0.5;
     return `
       <g>
         <text class="retained-account-title" x="34" y="${rowTop + 44}">${escapeHtml(row.account)}</text>
         <text class="retained-account-subtitle" x="34" y="${rowTop + 64}">${escapeHtml(chartSubtitle(row))}</text>
-        <path d="${areaPath({
-          x: graphX,
-          y,
-          width: graphWidth,
-          height: graphHeight,
-          startValue: modeled.contribution,
-          peakValue: modeled.futureBeforeTax,
-          endValue: modeled.futureAfterTax,
-          yFor,
-        })}" fill="${retainedColor}" stroke="${retainedStroke}" stroke-width="1.1"></path>
-        ${wedge({ kind: "contribution", x: graphX, yFor, width: graphWidth, startValue: modeled.contribution, amount: modeled.contributionTax })}
-        ${wedge({ kind: "drag", x: graphX, yFor, width: graphWidth, peakValue: modeled.futureBeforeTax, amount: modeled.drag })}
-        ${wedge({ kind: "withdrawal", x: graphX, yFor, width: graphWidth, endValue: modeled.futureAfterTax, amount: modeled.withdrawalTax })}
+        ${contributionTaxArea}
+        ${dragArea}
+        ${withdrawalTaxArea}
+        <path d="${areaPath({ points: retainedPoints, base, yFor })}" fill="${retainedColor}" stroke="${retainedStroke}" stroke-width="1.1"></path>
         <line x1="${graphX}" y1="${base}" x2="${graphX + graphWidth}" y2="${base}" stroke="${lineColor}"></line>
         ${callout({
           x: graphX + 82,
@@ -1748,8 +1756,8 @@ function renderGrowthChart(container, inputs, results) {
           title: "Tax now",
           value: showContributionTax ? `-${formatMoney(modeled.contributionTax)} (${pct(modeled.contributionTaxRate)})` : `${formatMoney(0)} (0.0%)`,
           note: showContributionTax ? "of pretax amount" : "no upfront tax",
-          targetX: showContributionTax ? currentTaxX : graphX + 14,
-          targetY: showContributionTax ? yFor(modeled.contribution) - 2 : yFor(modeled.contribution),
+          targetX: showContributionTax ? (startX + investedX) / 2 : graphX + 14,
+          targetY: showContributionTax ? yFor(modeled.contribution + modeled.contributionTax * 0.5) : yFor(modeled.contribution),
           color: showContributionTax ? taxColor : goodColor,
           good: !showContributionTax,
           showLeader: showContributionTax,
@@ -1761,8 +1769,8 @@ function renderGrowthChart(container, inputs, results) {
           title: labelForDrag(row),
           value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
           note: "of no-fee value",
-          targetX: feeX + 22,
-          targetY: yFor(modeled.futureBeforeTax) + 2,
+          targetX: (peakX + feeEndX) / 2,
+          targetY: yFor(modeled.futureBeforeTax + modeled.drag * 0.5),
         })}
         ${callout({
           x: graphX + 670,
@@ -1771,13 +1779,13 @@ function renderGrowthChart(container, inputs, results) {
           title: "Tax at withdrawal",
           value: showWithdrawalTax ? `-${formatMoney(modeled.withdrawalTax)} (${pct(modeled.withdrawalTaxRate)})` : `${formatMoney(0)} (0.0%)`,
           note: showWithdrawalTax ? "of pretax value" : "tax-free withdrawal",
-          targetX: showWithdrawalTax ? withdrawalTaxX + 22 : graphX + graphWidth - 8,
-          targetY: showWithdrawalTax ? yFor(modeled.futureBeforeTax) + 4 : yFor(modeled.futureAfterTax),
+          targetX: showWithdrawalTax ? (taxStartX + endX) / 2 : graphX + graphWidth - 8,
+          targetY: showWithdrawalTax ? yFor(modeled.futureAfterTax + modeled.withdrawalTax * 0.5) : yFor(modeled.futureAfterTax),
           color: showWithdrawalTax ? taxColor : goodColor,
           good: !showWithdrawalTax,
           showLeader: showWithdrawalTax,
         })}
-        <text class="retained-value-label" x="${graphX + graphWidth - 6}" y="${base - 7}" text-anchor="end">In hand ${formatMoney(modeled.futureAfterTax)}</text>
+        <text class="retained-value-label" x="${endX - 6}" y="${base - 7}" text-anchor="end">In hand ${formatMoney(modeled.futureAfterTax)}</text>
       </g>
     `;
   }).join("");
