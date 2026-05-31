@@ -1406,7 +1406,7 @@ function uniqueChartTicks(ticks) {
   });
 }
 
-function renderGrowthChart(container, inputs, results) {
+function renderLegacyGrowthChart(container, inputs, results) {
   if (!container) return;
   const availableResults = results.filter((row) => row.futureValueAfterTax !== null);
   const years = Math.max(0, inputs.withdrawalAge - inputs.currentAge);
@@ -1553,6 +1553,256 @@ function renderGrowthChart(container, inputs, results) {
       <text class="chart-axis-label" x="${margin.left + plotWidth / 2}" y="${chartHeight - 10}" text-anchor="middle">Age</text>
     </svg>
     <div class="chart-legend">${legend}</div>
+  `;
+}
+
+function renderGrowthChart(container, inputs, results) {
+  if (!container) return;
+  const availableResults = results.filter((row) => row.futureValueAfterTax !== null);
+  const years = Math.max(0, inputs.withdrawalAge - inputs.currentAge);
+  if (!availableResults.length) {
+    container.innerHTML = `
+      <div class="growth-chart-header">
+        <h2>Retained-value timelines</h2>
+        <span>Select at least one available account to show the graphic.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const chartWidth = 1120;
+  const rowHeight = 132;
+  const rowStart = 74;
+  const chartHeight = rowStart + (availableResults.length * rowHeight) + 64;
+  const graphX = 222;
+  const graphWidth = 820;
+  const graphHeight = 58;
+  const currentTaxX = graphX + graphWidth * 0.15;
+  const feeX = graphX + graphWidth * 0.74;
+  const withdrawalTaxX = graphX + graphWidth * 0.93;
+  const retainedColor = "#5ac8a5";
+  const retainedStroke = "#118466";
+  const removedColor = "#f49a78";
+  const taxColor = "#a35f3b";
+  const goodColor = "#0f766e";
+  const lineColor = "#d8e0e6";
+  const pct = (value) => `${((Number.isFinite(value) ? value : 0) * 100).toFixed(1)}%`;
+  const chartSubtitle = (row) => {
+    if (row.account === "Taxable brokerage") return "After-tax contribution; gains taxed at sale";
+    if (row.account === "HSA") return inputs.withdrawalAge >= 65
+      ? "Pretax contribution; nonmedical age-65+ withdrawal"
+      : "Pretax contribution; pre-65 HSA rules may apply";
+    if (row.account.includes("Roth")) return "Tax paid up front; qualified withdrawal tax-free";
+    if (row.account.includes("Traditional IRA") && row.currentTaxSavings < inputs.pretaxBudget * 0.01) {
+      return "Nondeductible basis modeled where deduction is limited";
+    }
+    return "Current tax benefit; taxed at withdrawal";
+  };
+  const labelForDrag = (row) => (row.account === "Taxable brokerage" ? "Fees / tax drag" : "Fees");
+  const modelChartRow = (row) => {
+    const contribution = Math.max(0, row.postTaxContributionToday || 0);
+    const futureBeforeTax = Math.max(0, row.futureValueBeforeTax || 0);
+    const futureAfterTax = Math.max(0, row.futureValueAfterTax || 0);
+    const noFeeFutureValue = futureValue(contribution, years, inputs.annualReturn, 0);
+    const contributionTax = Math.max(0, inputs.pretaxBudget - contribution);
+    const drag = Math.max(0, noFeeFutureValue - futureBeforeTax);
+    const withdrawalTax = Math.max(0, row.taxDueAtWithdrawal || 0);
+    return {
+      row,
+      contribution,
+      futureBeforeTax,
+      futureAfterTax,
+      noFeeFutureValue,
+      contributionTax,
+      contributionTaxRate: inputs.pretaxBudget ? contributionTax / inputs.pretaxBudget : 0,
+      drag,
+      dragRate: noFeeFutureValue ? drag / noFeeFutureValue : 0,
+      withdrawalTax,
+      withdrawalTaxRate: futureBeforeTax ? withdrawalTax / futureBeforeTax : 0,
+      yMax: Math.max(inputs.pretaxBudget, contribution, noFeeFutureValue, futureBeforeTax, futureAfterTax + withdrawalTax, 1) * 1.16,
+    };
+  };
+  const areaPath = ({ x, y, width, height, startValue, peakValue, endValue, yFor }) => {
+    const base = y + height;
+    const peakX = x + width * 0.68;
+    return `
+      M ${x} ${base}
+      L ${x} ${yFor(startValue)}
+      C ${x + width * 0.16} ${yFor(startValue * 0.97)}, ${x + width * 0.36} ${yFor(startValue * 1.18)}, ${peakX} ${yFor(peakValue)}
+      C ${x + width * 0.78} ${yFor(peakValue * 0.98)}, ${x + width * 0.91} ${yFor((peakValue + endValue) / 2)}, ${x + width} ${yFor(endValue)}
+      L ${x + width} ${base}
+      Z
+    `;
+  };
+  const leader = ({ startX, startY, targetX, targetY, color }) => {
+    const midY = (startY + targetY) / 2;
+    const points = [
+      { x: startX, y: startY },
+      { x: startX, y: midY },
+      { x: targetX, y: midY },
+      { x: targetX, y: targetY },
+    ];
+    const end = points[points.length - 1];
+    const beforeEnd = points[points.length - 2];
+    const angle = Math.atan2(end.y - beforeEnd.y, end.x - beforeEnd.x);
+    const arrowLength = 8;
+    const arrowSpread = 4;
+    const backX = end.x - Math.cos(angle) * arrowLength;
+    const backY = end.y - Math.sin(angle) * arrowLength;
+    const perpX = -Math.sin(angle) * arrowSpread;
+    const perpY = Math.cos(angle) * arrowSpread;
+    const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+    return `
+      <path class="retained-leader-line" d="${path}" stroke="${color}"></path>
+      <path d="M ${(backX + perpX).toFixed(2)} ${(backY + perpY).toFixed(2)} L ${end.x.toFixed(2)} ${end.y.toFixed(2)} L ${(backX - perpX).toFixed(2)} ${(backY - perpY).toFixed(2)}" fill="none" stroke="${color}" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"></path>
+    `;
+  };
+  const callout = ({
+    x,
+    y,
+    width,
+    title,
+    value,
+    note,
+    targetX,
+    targetY,
+    color = taxColor,
+    good = false,
+    showLeader = true,
+  }) => {
+    const height = note ? 52 : 40;
+    const startX = x + width / 2;
+    const startY = y + height;
+    return `
+      ${showLeader ? leader({ startX, startY, targetX, targetY, color }) : ""}
+      <rect class="retained-callout-box" x="${x}" y="${y}" width="${width}" height="${height}" rx="7"></rect>
+      <text class="retained-callout-title" x="${x + 10}" y="${y + 16}">${escapeHtml(title)}</text>
+      <text class="retained-callout-value${good ? " good" : ""}" x="${x + 10}" y="${y + 33}">${escapeHtml(value)}</text>
+      ${note ? `<text class="retained-callout-note" x="${x + 10}" y="${y + 47}">${escapeHtml(note)}</text>` : ""}
+    `;
+  };
+  const wedge = ({ kind, x, yFor, width, startValue, peakValue, endValue, amount }) => {
+    if (amount <= 0.5) return "";
+    if (kind === "contribution") {
+      const top = yFor(startValue + amount * 0.58);
+      const bottom = yFor(startValue);
+      return `
+        <path d="M ${x.toFixed(2)} ${top.toFixed(2)}
+          C ${(x + width * 0.04).toFixed(2)} ${(top + 3).toFixed(2)}, ${(x + width * 0.1).toFixed(2)} ${(bottom - 3).toFixed(2)}, ${(x + width * 0.15).toFixed(2)} ${bottom.toFixed(2)}
+          L ${(x + width * 0.15).toFixed(2)} ${(bottom + 10).toFixed(2)}
+          C ${(x + width * 0.08).toFixed(2)} ${(bottom + 7).toFixed(2)}, ${(x + width * 0.03).toFixed(2)} ${(bottom + 4).toFixed(2)}, ${x.toFixed(2)} ${(bottom + 2).toFixed(2)}
+          Z" fill="${removedColor}" opacity="0.88"></path>
+      `;
+    }
+    if (kind === "drag") {
+      const top = yFor(peakValue + amount * 0.24);
+      const bottom = yFor(peakValue);
+      return `
+        <path d="M ${(feeX - width * 0.07).toFixed(2)} ${top.toFixed(2)}
+          C ${(feeX - width * 0.02).toFixed(2)} ${(top + 3).toFixed(2)}, ${(feeX + width * 0.04).toFixed(2)} ${(bottom - 4).toFixed(2)}, ${(feeX + width * 0.1).toFixed(2)} ${bottom.toFixed(2)}
+          L ${(feeX + width * 0.1).toFixed(2)} ${(bottom + 11).toFixed(2)}
+          C ${(feeX + width * 0.03).toFixed(2)} ${(bottom + 8).toFixed(2)}, ${(feeX - width * 0.04).toFixed(2)} ${(bottom + 5).toFixed(2)}, ${(feeX - width * 0.07).toFixed(2)} ${(bottom + 1).toFixed(2)}
+          Z" fill="${removedColor}" opacity="0.88"></path>
+      `;
+    }
+    const top = yFor(endValue + amount);
+    const bottom = yFor(endValue);
+    return `
+      <path d="M ${(withdrawalTaxX - width * 0.1).toFixed(2)} ${top.toFixed(2)}
+        L ${(x + width).toFixed(2)} ${top.toFixed(2)}
+        L ${(x + width).toFixed(2)} ${bottom.toFixed(2)}
+        C ${(x + width * 0.98).toFixed(2)} ${(bottom - 12).toFixed(2)}, ${(withdrawalTaxX - width * 0.04).toFixed(2)} ${(bottom - 27).toFixed(2)}, ${(withdrawalTaxX - width * 0.1).toFixed(2)} ${(bottom - 38).toFixed(2)}
+        Z" fill="${removedColor}" opacity="0.92"></path>
+    `;
+  };
+  const rows = availableResults.map((row, index) => {
+    const modeled = modelChartRow(row);
+    const rowTop = rowStart + index * rowHeight;
+    const y = rowTop + 44;
+    const base = y + graphHeight;
+    const yFor = (value) => base - (value / modeled.yMax) * graphHeight * 0.92;
+    const showContributionTax = modeled.contributionTax > 0.5;
+    const showWithdrawalTax = modeled.withdrawalTax > 0.5;
+    return `
+      <g>
+        <text class="retained-account-title" x="34" y="${rowTop + 44}">${escapeHtml(row.account)}</text>
+        <text class="retained-account-subtitle" x="34" y="${rowTop + 64}">${escapeHtml(chartSubtitle(row))}</text>
+        <path d="${areaPath({
+          x: graphX,
+          y,
+          width: graphWidth,
+          height: graphHeight,
+          startValue: modeled.contribution,
+          peakValue: modeled.futureBeforeTax,
+          endValue: modeled.futureAfterTax,
+          yFor,
+        })}" fill="${retainedColor}" stroke="${retainedStroke}" stroke-width="1.1"></path>
+        ${wedge({ kind: "contribution", x: graphX, yFor, width: graphWidth, startValue: modeled.contribution, amount: modeled.contributionTax })}
+        ${wedge({ kind: "drag", x: graphX, yFor, width: graphWidth, peakValue: modeled.futureBeforeTax, amount: modeled.drag })}
+        ${wedge({ kind: "withdrawal", x: graphX, yFor, width: graphWidth, endValue: modeled.futureAfterTax, amount: modeled.withdrawalTax })}
+        <line x1="${graphX}" y1="${base}" x2="${graphX + graphWidth}" y2="${base}" stroke="${lineColor}"></line>
+        ${callout({
+          x: graphX + 82,
+          y: rowTop + 4,
+          width: 142,
+          title: "Tax now",
+          value: showContributionTax ? `-${formatMoney(modeled.contributionTax)} (${pct(modeled.contributionTaxRate)})` : `${formatMoney(0)} (0.0%)`,
+          note: showContributionTax ? "of pretax amount" : "no upfront tax",
+          targetX: showContributionTax ? currentTaxX : graphX + 14,
+          targetY: showContributionTax ? yFor(modeled.contribution) - 2 : yFor(modeled.contribution),
+          color: showContributionTax ? taxColor : goodColor,
+          good: !showContributionTax,
+          showLeader: showContributionTax,
+        })}
+        ${callout({
+          x: graphX + 492,
+          y: rowTop + 4,
+          width: 154,
+          title: labelForDrag(row),
+          value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
+          note: "of no-fee value",
+          targetX: feeX + 22,
+          targetY: yFor(modeled.futureBeforeTax) + 2,
+        })}
+        ${callout({
+          x: graphX + 670,
+          y: rowTop + 4,
+          width: 168,
+          title: "Tax at withdrawal",
+          value: showWithdrawalTax ? `-${formatMoney(modeled.withdrawalTax)} (${pct(modeled.withdrawalTaxRate)})` : `${formatMoney(0)} (0.0%)`,
+          note: showWithdrawalTax ? "of pretax value" : "tax-free withdrawal",
+          targetX: showWithdrawalTax ? withdrawalTaxX + 22 : graphX + graphWidth - 8,
+          targetY: showWithdrawalTax ? yFor(modeled.futureBeforeTax) + 4 : yFor(modeled.futureAfterTax),
+          color: showWithdrawalTax ? taxColor : goodColor,
+          good: !showWithdrawalTax,
+          showLeader: showWithdrawalTax,
+        })}
+        <text class="retained-value-label" x="${graphX + graphWidth - 6}" y="${base - 7}" text-anchor="end">In hand ${formatMoney(modeled.futureAfterTax)}</text>
+      </g>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="growth-chart-header">
+      <h2>Retained-value timelines</h2>
+      <span>Taxes, drag, and final value update from the modeled outputs.</span>
+    </div>
+    <div class="retained-chart-scroll">
+      <svg role="img" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-label="Retained value timelines for retirement account choices">
+        <text class="retained-stage-label" x="${graphX}" y="34">Pretax equivalent</text>
+        <text class="retained-stage-label" x="${graphX + graphWidth * 0.16}" y="34">Invested</text>
+        <text class="retained-stage-label" x="${graphX + graphWidth * 0.43}" y="34">${years} yrs growth</text>
+        <text class="retained-stage-label" x="${graphX + graphWidth * 0.75}" y="34">Drag</text>
+        <text class="retained-stage-label" x="${graphX + graphWidth}" y="34" text-anchor="end">Available</text>
+        ${rows}
+        <text class="retained-rule-note" x="34" y="${chartHeight - 22}">Rules: current-tax wedge scales with tax paid before contribution; green area scales with actual contribution and net growth; drag wedge scales with fees or annual taxable drag; withdrawal wedge scales with tax due at withdrawal.</text>
+      </svg>
+    </div>
+    <div class="chart-legend">
+      <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${retainedColor}"></span><span>Value retained</span></div>
+      <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${removedColor}"></span><span>Taxes, fees, or tax drag removed</span></div>
+      <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${goodColor}"></span><span>No tax at that stage</span></div>
+    </div>
   `;
 }
 

@@ -437,6 +437,81 @@ td.account-unavailable-cell.note-cell {
   min-height: 260px;
 }
 
+.retained-chart-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.retained-account-title {
+  fill: var(--ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.retained-account-subtitle,
+.retained-stage-label,
+.retained-rule-note {
+  fill: var(--muted);
+  font-weight: 700;
+}
+
+.retained-account-subtitle {
+  font-size: 0.66rem;
+}
+
+.retained-stage-label {
+  font-size: 0.7rem;
+}
+
+.retained-rule-note {
+  font-size: 0.68rem;
+}
+
+.retained-value-label {
+  fill: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.retained-callout-box {
+  fill: #fff;
+  stroke: var(--line);
+  stroke-width: 1;
+  filter: drop-shadow(0 5px 10px rgba(31, 41, 55, 0.1));
+}
+
+.retained-leader-line {
+  fill: none;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.82;
+}
+
+.retained-callout-title {
+  fill: var(--ink);
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.retained-callout-value {
+  fill: #a35f3b;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.retained-callout-value.good {
+  fill: #0f766e;
+}
+
+.retained-callout-note {
+  fill: var(--muted);
+  font-size: 0.55rem;
+  font-weight: 650;
+}
+
 .chart-axis,
 .chart-grid {
   stroke: var(--line);
@@ -750,6 +825,11 @@ td.account-unavailable-cell.note-cell {
 
   .growth-chart svg {
     min-height: 230px;
+  }
+
+  .retained-chart-scroll svg {
+    width: 1120px;
+    max-width: none;
   }
 
   th:first-child,
