@@ -1558,7 +1558,9 @@ function renderLegacyGrowthChart(container, inputs, results) {
 
 function renderGrowthChart(container, inputs, results) {
   if (!container) return;
-  const availableResults = results.filter((row) => row.futureValueAfterTax !== null);
+  const availableResults = results
+    .filter((row) => row.futureValueAfterTax !== null)
+    .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
   const years = Math.max(0, inputs.withdrawalAge - inputs.currentAge);
   if (!availableResults.length) {
     container.innerHTML = `
