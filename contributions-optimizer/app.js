@@ -1770,13 +1770,21 @@ function renderGrowthChart(container, inputs, results) {
     const rowTop = rowStart + index * rowHeight;
     const y = rowTop + 76;
     const base = y + graphHeight;
-    const yFor = (value) => base - (value / modeled.yMax) * graphHeight * 0.92;
     const startX = graphX;
     const investedX = currentTaxX;
-    const peakX = graphX + graphWidth * 0.68;
     const feeEndX = graphX + graphWidth * 0.84;
     const taxStartX = withdrawalTaxX - graphWidth * 0.06;
     const endX = graphX + graphWidth;
+    const retainedGrowth = Math.max(0, modeled.futureBeforeTax - modeled.contribution);
+    const feeDragGrowth = Math.max(0, modeled.noFeeFutureValue - modeled.futureBeforeTax);
+    const alignedPeakX = retainedGrowth + feeDragGrowth > 0
+      ? ((retainedGrowth * feeEndX) + (feeDragGrowth * investedX)) / (retainedGrowth + feeDragGrowth)
+      : graphX + graphWidth * 0.68;
+    const peakX = Math.max(investedX + 120, Math.min(feeEndX - 18, alignedPeakX));
+    const retainedGrowthSlope = (modeled.futureBeforeTax - modeled.contribution) / Math.max(1, peakX - investedX);
+    const feeTopValue = modeled.futureBeforeTax + retainedGrowthSlope * Math.max(0, feeEndX - peakX);
+    const yMax = Math.max(modeled.yMax, feeTopValue * 1.04);
+    const yFor = (value) => base - (value / yMax) * graphHeight * 0.92;
     const retainedPoints = [
       { x: startX, value: inputs.pretaxBudget },
       { x: investedX, value: modeled.contribution },
@@ -1800,7 +1808,7 @@ function renderGrowthChart(container, inputs, results) {
         yFor,
         points: [
           { x: peakX, value: modeled.futureBeforeTax },
-          { x: feeEndX, value: modeled.noFeeFutureValue },
+          { x: feeEndX, value: feeTopValue },
           { x: feeEndX, value: modeled.futureBeforeTax },
         ],
       })
@@ -1851,7 +1859,7 @@ function renderGrowthChart(container, inputs, results) {
           value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
           note: "of no-fee value",
           targetX: (peakX + feeEndX + feeEndX) / 3,
-          targetY: yFor((modeled.futureBeforeTax + modeled.noFeeFutureValue + modeled.futureBeforeTax) / 3),
+          targetY: yFor((modeled.futureBeforeTax + feeTopValue + modeled.futureBeforeTax) / 3),
         })}
         ${callout({
           x: graphX + 670,
