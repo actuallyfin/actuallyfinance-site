@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Retirement Contributions Optimizer</title>
   <meta name="description" content="Rank retirement account contributions by projected after-tax value across IRA, 401k, HSA, and taxable brokerage accounts.">
-  <link rel="stylesheet" href="styles.css?v=20260528-input-spacing">
+  <link rel="stylesheet" href="styles.css?v=20260601-sticky-chart">
 </head>
 <body>
   <main class="shell">
@@ -23,121 +23,123 @@
     </header>
 
     <section class="layout" aria-label="Optimizer inputs and results">
-      <form class="input-panel" id="optimizer-form">
-        <div class="field-columns">
-          <div class="field-stack">
-          <label class="field-current-income">
-            <span>Current income ($/year)</span>
-            <input id="current-income" name="currentIncome" type="number" min="0" step="5000" value="85000">
-          </label>
-          <label class="field-filing-status">
-            <span>Filing status</span>
-            <select id="filing-status" name="filingStatus">
-              <option value="single">Single</option>
-              <option value="married_filing_jointly" selected>Married filing jointly</option>
-            </select>
-          </label>
-          <label class="field-current-state">
-            <span>Current state</span>
-            <select id="current-state" name="currentState"></select>
-          </label>
-          <label class="field-current-age">
-            <span>Current age (years)</span>
-            <input id="current-age" name="currentAge" type="number" min="0" max="120" step="1" value="35">
-          </label>
-          </div>
-          <div class="field-stack">
-          <label class="field-retirement-income">
-            <span>Required after-tax retirement income ($/year)</span>
-            <input id="retirement-income" name="retirementIncome" type="number" min="0" step="5000" value="75000">
-            <small class="input-note" id="retirement-pretax-equivalent"></small>
-          </label>
-          <label class="field-dependents">
-            <span>Dependents (count)</span>
-            <input id="dependents" name="dependents" type="number" min="0" step="1" value="0">
-          </label>
-          <label class="field-retirement-state">
-            <span>Retirement state</span>
-            <select id="retirement-state" name="retirementState"></select>
-          </label>
-          <label class="field-withdrawal-age">
-            <span>Planned withdrawal age (years)</span>
-            <input id="withdrawal-age" name="withdrawalAge" type="number" min="0" max="120" step="1" value="65">
-          </label>
-          </div>
-        </div>
-
-        <details class="advanced">
-          <summary>Advanced options</summary>
-          <div class="field-grid advanced-grid">
-            <label>
-              <span>Pretax income amount to compare ($)</span>
-              <input id="pretax-budget" name="pretaxBudget" type="number" min="1" step="100" value="3000">
+      <div class="optimizer-grid">
+        <form class="input-panel" id="optimizer-form">
+          <div class="field-columns">
+            <div class="field-stack">
+            <label class="field-current-income">
+              <span>Current income ($/year)</span>
+              <input id="current-income" name="currentIncome" type="number" min="0" step="5000" value="85000">
             </label>
-            <label>
-              <span>Primary earner share of household wages (%)</span>
-              <input id="primary-earner-share" name="primaryEarnerShare" type="number" min="0" max="100" step="5" value="50">
+            <label class="field-filing-status">
+              <span>Filing status</span>
+              <select id="filing-status" name="filingStatus">
+                <option value="single">Single</option>
+                <option value="married_filing_jointly" selected>Married filing jointly</option>
+              </select>
             </label>
-            <label class="range-field">
-              <span>Current income from long-term capital gains or qualified dividends %</span>
-              <div class="range-control">
-                <input id="current-ltcg-share" name="currentLtcgShare" type="range" min="0" max="100" step="5" value="0">
-                <output id="current-ltcg-share-output" for="current-ltcg-share">0%</output>
-              </div>
+            <label class="field-current-state">
+              <span>Current state</span>
+              <select id="current-state" name="currentState"></select>
             </label>
-            <label class="range-field">
-              <span>Retirement baseline income from long-term capital gains or qualified dividends %</span>
-              <div class="range-control">
-                <input id="retirement-ltcg-share" name="retirementLtcgShare" type="range" min="0" max="100" step="5" value="0">
-                <output id="retirement-ltcg-share-output" for="retirement-ltcg-share">0%</output>
-              </div>
+            <label class="field-current-age">
+              <span>Current age (years)</span>
+              <input id="current-age" name="currentAge" type="number" min="0" max="120" step="1" value="35">
             </label>
-            <label>
-              <span>Expected annual investment return (%)</span>
-              <input id="annual-return" name="annualReturn" type="number" min="0" max="15" step="0.25" value="8">
+            </div>
+            <div class="field-stack">
+            <label class="field-retirement-income">
+              <span>Required after-tax retirement income ($/year)</span>
+              <input id="retirement-income" name="retirementIncome" type="number" min="0" step="5000" value="75000">
+              <small class="input-note" id="retirement-pretax-equivalent"></small>
             </label>
-            <label>
-              <span>Base annual account expense drag (%)</span>
-              <input id="base-expense" name="baseExpense" type="number" min="0" max="3" step="0.05" value="0.10">
+            <label class="field-dependents">
+              <span>Dependents (count)</span>
+              <input id="dependents" name="dependents" type="number" min="0" step="1" value="0">
             </label>
-            <label>
-              <span>Extra 401k annual expense drag (%)</span>
-              <input id="extra-401k-expense" name="extra401kExpense" type="number" min="0" max="3" step="0.05" value="0.20">
+            <label class="field-retirement-state">
+              <span>Retirement state</span>
+              <select id="retirement-state" name="retirementState"></select>
             </label>
-            <label>
-              <span>Taxable brokerage annual tax drag (%)</span>
-              <input id="taxable-drag" name="taxableDrag" type="number" min="0" max="3" step="0.05" value="0">
+            <label class="field-withdrawal-age">
+              <span>Planned withdrawal age (years)</span>
+              <input id="withdrawal-age" name="withdrawalAge" type="number" min="0" max="120" step="1" value="65">
             </label>
-            <label>
-              <span>Extra HSA annual expense drag (%)</span>
-              <input id="extra-hsa-expense" name="extraHsaExpense" type="number" min="0" max="3" step="0.05" value="0.20">
-            </label>
+            </div>
           </div>
 
-          <div class="toggle-grid">
-            <label><input id="has-401k" name="has401k" type="checkbox" checked> <span>User has access to a 401k plan</span></label>
-            <label><input id="has-hsa" name="hasHsa" type="checkbox" checked> <span>User is HSA eligible</span></label>
-            <label><input id="hsa-payroll" name="hsaPayroll" type="checkbox" checked> <span>HSA contribution will be made through paycheck</span></label>
-            <label><input id="workplace-plan" name="workplacePlan" type="checkbox" checked> <span>IRA contributor is covered by a workplace retirement plan</span></label>
-            <label><input id="spouse-workplace-plan" name="spouseWorkplacePlan" type="checkbox" checked> <span>Spouse is covered by a workplace retirement plan</span></label>
-          </div>
-        </details>
-      </form>
+          <details class="advanced">
+            <summary>Advanced options</summary>
+            <div class="field-grid advanced-grid">
+              <label>
+                <span>Pretax income amount to compare ($)</span>
+                <input id="pretax-budget" name="pretaxBudget" type="number" min="1" step="100" value="3000">
+              </label>
+              <label>
+                <span>Primary earner share of household wages (%)</span>
+                <input id="primary-earner-share" name="primaryEarnerShare" type="number" min="0" max="100" step="5" value="50">
+              </label>
+              <label class="range-field">
+                <span>Current income from long-term capital gains or qualified dividends %</span>
+                <div class="range-control">
+                  <input id="current-ltcg-share" name="currentLtcgShare" type="range" min="0" max="100" step="5" value="0">
+                  <output id="current-ltcg-share-output" for="current-ltcg-share">0%</output>
+                </div>
+              </label>
+              <label class="range-field">
+                <span>Retirement baseline income from long-term capital gains or qualified dividends %</span>
+                <div class="range-control">
+                  <input id="retirement-ltcg-share" name="retirementLtcgShare" type="range" min="0" max="100" step="5" value="0">
+                  <output id="retirement-ltcg-share-output" for="retirement-ltcg-share">0%</output>
+                </div>
+              </label>
+              <label>
+                <span>Expected annual investment return (%)</span>
+                <input id="annual-return" name="annualReturn" type="number" min="0" max="15" step="0.25" value="8">
+              </label>
+              <label>
+                <span>Base annual account expense drag (%)</span>
+                <input id="base-expense" name="baseExpense" type="number" min="0" max="3" step="0.05" value="0.10">
+              </label>
+              <label>
+                <span>Extra 401k annual expense drag (%)</span>
+                <input id="extra-401k-expense" name="extra401kExpense" type="number" min="0" max="3" step="0.05" value="0.20">
+              </label>
+              <label>
+                <span>Taxable brokerage annual tax drag (%)</span>
+                <input id="taxable-drag" name="taxableDrag" type="number" min="0" max="3" step="0.05" value="0">
+              </label>
+              <label>
+                <span>Extra HSA annual expense drag (%)</span>
+                <input id="extra-hsa-expense" name="extraHsaExpense" type="number" min="0" max="3" step="0.05" value="0.20">
+              </label>
+            </div>
 
-      <section class="results-panel" aria-label="Account ranking results">
-        <aside class="priority-notice" aria-label="401k employer match priority">
-          <strong>401k match comes first.</strong>
-          <span>If your workplace offers a 401k match, contribute enough to receive the full match before using this ranking. Either Traditional 401k or Roth 401k may be the top priority up to the match.</span>
-        </aside>
-        <div class="table-wrap">
-          <table id="results-table"></table>
-        </div>
-        <div class="results-cards" id="results-cards"></div>
-        <div id="footnotes" class="footnotes"></div>
-        <p class="model-note">
-          Prototype assumptions: qualified Roth withdrawals unless noted, early withdrawal penalties noted but not modeled, no employer match, no contribution limits except income-driven IRA notes, current-law 2026 brackets, NIIT where applicable, taxable brokerage gains treated as long-term capital gains, and HSA withdrawals treated as nonmedical retirement distributions after age 65 unless noted.
-        </p>
-      </section>
+            <div class="toggle-grid">
+              <label><input id="has-401k" name="has401k" type="checkbox" checked> <span>User has access to a 401k plan</span></label>
+              <label><input id="has-hsa" name="hasHsa" type="checkbox" checked> <span>User is HSA eligible</span></label>
+              <label><input id="hsa-payroll" name="hsaPayroll" type="checkbox" checked> <span>HSA contribution will be made through paycheck</span></label>
+              <label><input id="workplace-plan" name="workplacePlan" type="checkbox" checked> <span>IRA contributor is covered by a workplace retirement plan</span></label>
+              <label><input id="spouse-workplace-plan" name="spouseWorkplacePlan" type="checkbox" checked> <span>Spouse is covered by a workplace retirement plan</span></label>
+            </div>
+          </details>
+        </form>
+
+        <section class="results-panel" aria-label="Account ranking results">
+          <aside class="priority-notice" aria-label="401k employer match priority">
+            <strong>401k match comes first.</strong>
+            <span>If your workplace offers a 401k match, contribute enough to receive the full match before using this ranking. Either Traditional 401k or Roth 401k may be the top priority up to the match.</span>
+          </aside>
+          <div class="table-wrap">
+            <table id="results-table"></table>
+          </div>
+          <div class="results-cards" id="results-cards"></div>
+          <div id="footnotes" class="footnotes"></div>
+          <p class="model-note">
+            Prototype assumptions: qualified Roth withdrawals unless noted, early withdrawal penalties noted but not modeled, no employer match, no contribution limits except income-driven IRA notes, current-law 2026 brackets, NIIT where applicable, taxable brokerage gains treated as long-term capital gains, and HSA withdrawals treated as nonmedical retirement distributions after age 65 unless noted.
+          </p>
+        </section>
+      </div>
       <section class="growth-chart" id="growth-chart" aria-label="Account growth comparison"></section>
     </section>
   </main>
