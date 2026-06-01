@@ -1777,14 +1777,12 @@ function renderGrowthChart(container, inputs, results) {
     const feeEndX = graphX + graphWidth * 0.84;
     const taxStartX = withdrawalTaxX - graphWidth * 0.06;
     const endX = graphX + graphWidth;
-    const taxStartProgress = (taxStartX - feeEndX) / Math.max(1, endX - feeEndX);
-    const valueAtTaxStart = modeled.futureBeforeTax
-      + (modeled.futureAfterTax - modeled.futureBeforeTax) * Math.max(0, Math.min(1, taxStartProgress));
     const retainedPoints = [
-      { x: startX, value: modeled.contribution },
+      { x: startX, value: inputs.pretaxBudget },
       { x: investedX, value: modeled.contribution },
       { x: peakX, value: modeled.futureBeforeTax },
       { x: feeEndX, value: modeled.futureBeforeTax },
+      { x: taxStartX, value: modeled.futureBeforeTax },
       { x: endX, value: modeled.futureAfterTax },
     ];
     const contributionTaxArea = modeled.contributionTax > 0.5
@@ -1794,7 +1792,6 @@ function renderGrowthChart(container, inputs, results) {
           { x: startX, value: inputs.pretaxBudget },
           { x: investedX, value: inputs.pretaxBudget },
           { x: investedX, value: modeled.contribution },
-          { x: startX, value: modeled.contribution },
         ],
       })
       : "";
@@ -1802,10 +1799,9 @@ function renderGrowthChart(container, inputs, results) {
       ? subtractionPath({
         yFor,
         points: [
-          { x: peakX, value: modeled.noFeeFutureValue },
+          { x: peakX, value: modeled.futureBeforeTax },
           { x: feeEndX, value: modeled.noFeeFutureValue },
           { x: feeEndX, value: modeled.futureBeforeTax },
-          { x: peakX, value: modeled.futureBeforeTax },
         ],
       })
       : "";
@@ -1816,7 +1812,6 @@ function renderGrowthChart(container, inputs, results) {
           { x: taxStartX, value: modeled.futureBeforeTax },
           { x: endX, value: modeled.futureBeforeTax },
           { x: endX, value: modeled.futureAfterTax },
-          { x: taxStartX, value: valueAtTaxStart },
         ],
       })
       : "";
@@ -1842,8 +1837,8 @@ function renderGrowthChart(container, inputs, results) {
           title: "Tax now",
           value: taxNowValueText(modeled),
           note: taxNowNoteText(modeled),
-          targetX: showContributionTax ? (startX + investedX) / 2 : graphX + 14,
-          targetY: showContributionTax ? yFor(modeled.contribution + modeled.contributionTax * 0.5) : yFor(modeled.contribution),
+          targetX: showContributionTax ? (startX + investedX + investedX) / 3 : graphX + 14,
+          targetY: showContributionTax ? yFor((inputs.pretaxBudget + inputs.pretaxBudget + modeled.contribution) / 3) : yFor(modeled.contribution),
           color: showContributionTax ? taxColor : goodColor,
           good: !showContributionTax,
           showLeader: showContributionTax,
@@ -1855,8 +1850,8 @@ function renderGrowthChart(container, inputs, results) {
           title: labelForDrag(row),
           value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
           note: "of no-fee value",
-          targetX: (peakX + feeEndX) / 2,
-          targetY: yFor(modeled.futureBeforeTax + modeled.drag * 0.5),
+          targetX: (peakX + feeEndX + feeEndX) / 3,
+          targetY: yFor((modeled.futureBeforeTax + modeled.noFeeFutureValue + modeled.futureBeforeTax) / 3),
         })}
         ${callout({
           x: graphX + 670,
@@ -1865,8 +1860,8 @@ function renderGrowthChart(container, inputs, results) {
           title: "Tax at withdrawal",
           value: showWithdrawalTax ? `-${formatMoney(modeled.withdrawalTax)} (${pct(modeled.withdrawalTaxRate)})` : `${formatMoney(0)} (0.0%)`,
           note: showWithdrawalTax ? "of pretax value" : "tax-free withdrawal",
-          targetX: showWithdrawalTax ? (taxStartX + endX) / 2 : graphX + graphWidth - 8,
-          targetY: showWithdrawalTax ? yFor(modeled.futureAfterTax + modeled.withdrawalTax * 0.5) : yFor(modeled.futureAfterTax),
+          targetX: showWithdrawalTax ? (taxStartX + endX + endX) / 3 : graphX + graphWidth - 8,
+          targetY: showWithdrawalTax ? yFor((modeled.futureBeforeTax + modeled.futureBeforeTax + modeled.futureAfterTax) / 3) : yFor(modeled.futureAfterTax),
           color: showWithdrawalTax ? taxColor : goodColor,
           good: !showWithdrawalTax,
           showLeader: showWithdrawalTax,
