@@ -1586,7 +1586,40 @@ function renderGrowthChart(container, inputs, results) {
   const taxColor = "#a35f3b";
   const goodColor = "#0f766e";
   const lineColor = "#d8e0e6";
-  const pct = (value) => `${((Number.isFinite(value) ? value : 0) * 100).toFixed(1)}%`;
+  const pct = (value) => {
+    const percentage = (Number.isFinite(value) ? value : 0) * 100;
+    return `${(Math.round((percentage + 1e-9) * 10) / 10).toFixed(1)}%`;
+  };
+  const currentIncomeSplit = splitIncomeByLtcgShare(inputs.currentIncome, inputs.currentLongTermCapitalGainsShare);
+  const ordinaryContributionSlice = Math.min(inputs.pretaxBudget, currentIncomeSplit.ordinaryIncome);
+  const currentIncomeTaxOnBudget = incomeTaxCostOnIncomeSlice({
+    currentIncome: inputs.currentIncome,
+    currentLongTermCapitalGainsShare: inputs.currentLongTermCapitalGainsShare,
+    incomeSlice: inputs.pretaxBudget,
+    state: inputs.currentState,
+    filingStatus: inputs.filingStatus,
+    dependents: inputs.dependents,
+  });
+  const payrollTaxOnBudget = hsaPayrollTaxSavings({
+    wageIncomeBeforeContribution: currentIncomeSplit.ordinaryIncome,
+    contribution: ordinaryContributionSlice,
+    filingStatus: inputs.filingStatus,
+    primaryEarnerShare: inputs.primaryEarnerShare,
+  });
+  const iraDeductionFractionForChart = traditionalIraDeductionFraction(
+    inputs.currentIncome,
+    inputs.filingStatus,
+    inputs.coveredByWorkplacePlan,
+    inputs.spouseCoveredByWorkplacePlan,
+  );
+  const traditionalIraTaxCostForChart = incomeTaxCostOnIncomeSlice({
+    currentIncome: inputs.currentIncome,
+    currentLongTermCapitalGainsShare: inputs.currentLongTermCapitalGainsShare,
+    incomeSlice: inputs.pretaxBudget * (1 - iraDeductionFractionForChart),
+    state: inputs.currentState,
+    filingStatus: inputs.filingStatus,
+    dependents: inputs.dependents,
+  });
   const chartSubtitle = (row) => {
     if (row.account === "Taxable brokerage") return "After-tax contribution; gains taxed at sale";
     if (row.account === "HSA") return inputs.withdrawalAge >= 65
@@ -1599,12 +1632,55 @@ function renderGrowthChart(container, inputs, results) {
     return "Current tax benefit; taxed at withdrawal";
   };
   const labelForDrag = (row) => (row.account === "Taxable brokerage" ? "Fees / tax drag" : "Fees");
+  const contributionTaxBreakdown = (row, contributionTax) => {
+    let payroll = 0;
+    let income = 0;
+    if (row.account === "Roth IRA" || row.account === "Roth 401k" || row.account === "Taxable brokerage") {
+      payroll = payrollTaxOnBudget;
+      income = currentIncomeTaxOnBudget;
+    } else if (row.account === "Traditional 401k") {
+      payroll = payrollTaxOnBudget;
+    } else if (row.account === "Traditional IRA") {
+      payroll = payrollTaxOnBudget;
+      income = traditionalIraTaxCostForChart;
+    } else if (row.account === "HSA" && !inputs.hsaPayrollContribution) {
+      payroll = payrollTaxOnBudget;
+    }
+    const componentTotal = payroll + income;
+    if (componentTotal > 0 && Math.abs(componentTotal - contributionTax) > 0.01) {
+      const scale = contributionTax / componentTotal;
+      payroll *= scale;
+      income *= scale;
+    }
+    return {
+      payroll: Math.max(0, payroll),
+      income: Math.max(0, income),
+      payrollRate: inputs.pretaxBudget ? Math.max(0, payroll) / inputs.pretaxBudget : 0,
+      incomeRate: inputs.pretaxBudget ? Math.max(0, income) / inputs.pretaxBudget : 0,
+    };
+  };
+  const taxNowValueText = (modeled) => {
+    if (modeled.contributionTax <= 0.5) return `${formatMoney(0)} (0.0%)`;
+    const parts = [];
+    if (modeled.incomeTax > 0.5) parts.push(`${pct(modeled.incomeTaxRate)} income`);
+    if (modeled.payrollTax > 0.5) parts.push(`${pct(modeled.payrollTaxRate)} payroll`);
+    if (parts.length === 1) return `-${formatMoney(modeled.contributionTax)} (${parts[0]})`;
+    return `-${formatMoney(modeled.contributionTax)} (${pct(modeled.contributionTaxRate)} total)`;
+  };
+  const taxNowNoteText = (modeled) => {
+    if (modeled.contributionTax <= 0.5) return "no upfront tax";
+    const parts = [];
+    if (modeled.payrollTax > 0.5) parts.push(`${pct(modeled.payrollTaxRate)} payroll`);
+    if (modeled.incomeTax > 0.5) parts.push(`${pct(modeled.incomeTaxRate)} income`);
+    return parts.length > 1 ? parts.join(" and ") : "of pretax amount";
+  };
   const modelChartRow = (row) => {
     const contribution = Math.max(0, row.postTaxContributionToday || 0);
     const futureBeforeTax = Math.max(0, row.futureValueBeforeTax || 0);
     const futureAfterTax = Math.max(0, row.futureValueAfterTax || 0);
     const noFeeFutureValue = futureValue(contribution, years, inputs.annualReturn, 0);
     const contributionTax = Math.max(0, inputs.pretaxBudget - contribution);
+    const contributionComponents = contributionTaxBreakdown(row, contributionTax);
     const drag = Math.max(0, noFeeFutureValue - futureBeforeTax);
     const withdrawalTax = Math.max(0, row.taxDueAtWithdrawal || 0);
     return {
@@ -1615,6 +1691,10 @@ function renderGrowthChart(container, inputs, results) {
       noFeeFutureValue,
       contributionTax,
       contributionTaxRate: inputs.pretaxBudget ? contributionTax / inputs.pretaxBudget : 0,
+      incomeTax: contributionComponents.income,
+      incomeTaxRate: contributionComponents.incomeRate,
+      payrollTax: contributionComponents.payroll,
+      payrollTaxRate: contributionComponents.payrollRate,
       drag,
       dragRate: noFeeFutureValue ? drag / noFeeFutureValue : 0,
       withdrawalTax,
@@ -1750,12 +1830,12 @@ function renderGrowthChart(container, inputs, results) {
         <path d="${areaPath({ points: retainedPoints, base, yFor })}" fill="${retainedColor}" stroke="${retainedStroke}" stroke-width="1.1"></path>
         <line x1="${graphX}" y1="${base}" x2="${graphX + graphWidth}" y2="${base}" stroke="${lineColor}"></line>
         ${callout({
-          x: graphX + 82,
+          x: graphX + 62,
           y: rowTop + 8,
-          width: 142,
+          width: 190,
           title: "Tax now",
-          value: showContributionTax ? `-${formatMoney(modeled.contributionTax)} (${pct(modeled.contributionTaxRate)})` : `${formatMoney(0)} (0.0%)`,
-          note: showContributionTax ? "of pretax amount" : "no upfront tax",
+          value: taxNowValueText(modeled),
+          note: taxNowNoteText(modeled),
           targetX: showContributionTax ? (startX + investedX) / 2 : graphX + 14,
           targetY: showContributionTax ? yFor(modeled.contribution + modeled.contributionTax * 0.5) : yFor(modeled.contribution),
           color: showContributionTax ? taxColor : goodColor,
