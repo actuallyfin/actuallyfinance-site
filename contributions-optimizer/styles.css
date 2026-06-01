@@ -71,6 +71,15 @@ h1 {
   letter-spacing: 0;
 }
 
+.app-description {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .site-link {
   display: inline-flex;
   margin-top: 10px;
