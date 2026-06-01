@@ -401,6 +401,7 @@ td.account-unavailable-cell.note-cell {
 }
 
 .growth-chart {
+  grid-column: 1 / -1;
   margin-top: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -828,7 +829,7 @@ td.account-unavailable-cell.note-cell {
   }
 
   .retained-chart-scroll svg {
-    width: 1120px;
+    width: 1240px;
     max-width: none;
   }
 

@@ -1563,19 +1563,19 @@ function renderGrowthChart(container, inputs, results) {
   if (!availableResults.length) {
     container.innerHTML = `
       <div class="growth-chart-header">
-        <h2>Retained-value timelines</h2>
+        <h2>Account growth comparison</h2>
         <span>Select at least one available account to show the graphic.</span>
       </div>
     `;
     return;
   }
 
-  const chartWidth = 1120;
-  const rowHeight = 132;
-  const rowStart = 74;
+  const chartWidth = 1240;
+  const rowHeight = 150;
+  const rowStart = 82;
   const chartHeight = rowStart + (availableResults.length * rowHeight) + 64;
-  const graphX = 222;
-  const graphWidth = 820;
+  const graphX = 268;
+  const graphWidth = 900;
   const graphHeight = 58;
   const currentTaxX = graphX + graphWidth * 0.15;
   const feeX = graphX + graphWidth * 0.74;
@@ -1686,7 +1686,7 @@ function renderGrowthChart(container, inputs, results) {
   const rows = availableResults.map((row, index) => {
     const modeled = modelChartRow(row);
     const rowTop = rowStart + index * rowHeight;
-    const y = rowTop + 44;
+    const y = rowTop + 76;
     const base = y + graphHeight;
     const yFor = (value) => base - (value / modeled.yMax) * graphHeight * 0.92;
     const startX = graphX;
@@ -1742,8 +1742,8 @@ function renderGrowthChart(container, inputs, results) {
     const showWithdrawalTax = modeled.withdrawalTax > 0.5;
     return `
       <g>
-        <text class="retained-account-title" x="34" y="${rowTop + 44}">${escapeHtml(row.account)}</text>
-        <text class="retained-account-subtitle" x="34" y="${rowTop + 64}">${escapeHtml(chartSubtitle(row))}</text>
+        <text class="retained-account-title" x="34" y="${rowTop + 58}">${escapeHtml(row.account)}</text>
+        <text class="retained-account-subtitle" x="34" y="${rowTop + 78}">${escapeHtml(chartSubtitle(row))}</text>
         ${contributionTaxArea}
         ${dragArea}
         ${withdrawalTaxArea}
@@ -1751,7 +1751,7 @@ function renderGrowthChart(container, inputs, results) {
         <line x1="${graphX}" y1="${base}" x2="${graphX + graphWidth}" y2="${base}" stroke="${lineColor}"></line>
         ${callout({
           x: graphX + 82,
-          y: rowTop + 4,
+          y: rowTop + 8,
           width: 142,
           title: "Tax now",
           value: showContributionTax ? `-${formatMoney(modeled.contributionTax)} (${pct(modeled.contributionTaxRate)})` : `${formatMoney(0)} (0.0%)`,
@@ -1764,7 +1764,7 @@ function renderGrowthChart(container, inputs, results) {
         })}
         ${callout({
           x: graphX + 492,
-          y: rowTop + 4,
+          y: rowTop + 8,
           width: 154,
           title: labelForDrag(row),
           value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
@@ -1774,7 +1774,7 @@ function renderGrowthChart(container, inputs, results) {
         })}
         ${callout({
           x: graphX + 670,
-          y: rowTop + 4,
+          y: rowTop + 8,
           width: 168,
           title: "Tax at withdrawal",
           value: showWithdrawalTax ? `-${formatMoney(modeled.withdrawalTax)} (${pct(modeled.withdrawalTaxRate)})` : `${formatMoney(0)} (0.0%)`,
@@ -1792,7 +1792,7 @@ function renderGrowthChart(container, inputs, results) {
 
   container.innerHTML = `
     <div class="growth-chart-header">
-      <h2>Retained-value timelines</h2>
+      <h2>Account growth comparison</h2>
       <span>Taxes, drag, and final value update from the modeled outputs.</span>
     </div>
     <div class="retained-chart-scroll">
