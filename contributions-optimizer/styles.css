@@ -449,17 +449,22 @@ td.account-unavailable-cell.note-cell {
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-gutter: stable;
+}
+
+.retained-row-band {
+  fill: #fbfcfd;
 }
 
 .retained-account-title {
   fill: var(--ink);
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 800;
 }
 
 .retained-account-subtitle,
-.retained-stage-label,
-.retained-rule-note {
+.retained-stage-label {
   fill: var(--muted);
   font-weight: 700;
 }
@@ -472,21 +477,21 @@ td.account-unavailable-cell.note-cell {
   font-size: 0.7rem;
 }
 
-.retained-rule-note {
-  font-size: 0.68rem;
-}
-
 .retained-value-label {
   fill: var(--ink);
   font-size: 0.68rem;
   font-weight: 800;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-linejoin: round;
+  stroke-width: 4px;
 }
 
 .retained-callout-box {
   fill: #fff;
   stroke: var(--line);
   stroke-width: 1;
-  filter: drop-shadow(0 5px 10px rgba(31, 41, 55, 0.1));
+  filter: drop-shadow(0 4px 8px rgba(31, 41, 55, 0.08));
 }
 
 .retained-leader-line {
@@ -555,6 +560,13 @@ td.account-unavailable-cell.note-cell {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 7px 12px;
   margin-top: 10px;
+}
+
+.chart-rule-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .chart-legend-item {

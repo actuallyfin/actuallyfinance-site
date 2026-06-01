@@ -1822,9 +1822,13 @@ function renderGrowthChart(container, inputs, results) {
       : "";
     const showContributionTax = modeled.contributionTax > 0.5;
     const showWithdrawalTax = modeled.withdrawalTax > 0.5;
+    const rowBand = index % 2 === 1
+      ? `<rect class="retained-row-band" x="0" y="${rowTop - 12}" width="${chartWidth}" height="${rowHeight - 10}"></rect>`
+      : "";
     return `
       <g>
-        <text class="retained-account-title" x="34" y="${rowTop + 58}">${escapeHtml(row.account)}</text>
+        ${rowBand}
+        <text class="retained-account-title" x="34" y="${rowTop + 58}">${escapeHtml(`${row.rank}. ${row.account}`)}</text>
         <text class="retained-account-subtitle" x="34" y="${rowTop + 78}">${escapeHtml(chartSubtitle(row))}</text>
         ${contributionTaxArea}
         ${dragArea}
@@ -1867,7 +1871,7 @@ function renderGrowthChart(container, inputs, results) {
           good: !showWithdrawalTax,
           showLeader: showWithdrawalTax,
         })}
-        <text class="retained-value-label" x="${endX - 6}" y="${base - 7}" text-anchor="end">In hand ${formatMoney(modeled.futureAfterTax)}</text>
+        <text class="retained-value-label" x="${endX - 8}" y="${base - 8}" text-anchor="end">In hand ${formatMoney(modeled.futureAfterTax)}</text>
       </g>
     `;
   }).join("");
@@ -1885,7 +1889,6 @@ function renderGrowthChart(container, inputs, results) {
         <text class="retained-stage-label" x="${graphX + graphWidth * 0.75}" y="34">Drag</text>
         <text class="retained-stage-label" x="${graphX + graphWidth}" y="34" text-anchor="end">Available</text>
         ${rows}
-        <text class="retained-rule-note" x="34" y="${chartHeight - 22}">Rules: current-tax wedge scales with tax paid before contribution; green area scales with actual contribution and net growth; drag wedge scales with fees or annual taxable drag; withdrawal wedge scales with tax due at withdrawal.</text>
       </svg>
     </div>
     <div class="chart-legend">
@@ -1893,6 +1896,7 @@ function renderGrowthChart(container, inputs, results) {
       <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${removedColor}"></span><span>Taxes, fees, or tax drag removed</span></div>
       <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${goodColor}"></span><span>No tax at that stage</span></div>
     </div>
+    <p class="chart-rule-note">Graphic proportions update directionally from the modeled outputs: current-tax wedge from tax paid before contribution, green area from actual contribution and net growth, drag wedge from fees or annual taxable drag, and withdrawal wedge from tax due at withdrawal.</p>
   `;
 }
 
