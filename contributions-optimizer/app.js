@@ -1784,7 +1784,14 @@ function renderGrowthChart(container, inputs, results) {
     const retainedGrowthSlope = (modeled.futureBeforeTax - modeled.contribution) / Math.max(1, peakX - investedX);
     const feeTopValue = modeled.futureBeforeTax + retainedGrowthSlope * Math.max(0, feeEndX - peakX);
     const yMax = Math.max(modeled.yMax, feeTopValue * 1.04);
-    const yFor = (value) => base - (value / yMax) * graphHeight * 0.92;
+    const usableHeight = graphHeight * 0.92;
+    const minPositiveHeight = graphHeight * 0.086;
+    const yFor = (value) => {
+      const safeValue = Math.max(0, value);
+      if (safeValue <= 0) return base;
+      const visualHeight = minPositiveHeight + (safeValue / yMax) * (usableHeight - minPositiveHeight);
+      return base - visualHeight;
+    };
     const retainedPoints = [
       { x: startX, value: inputs.pretaxBudget },
       { x: investedX, value: modeled.contribution },
