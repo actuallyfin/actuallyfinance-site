@@ -1573,12 +1573,12 @@ function renderGrowthChart(container, inputs, results) {
   }
 
   const chartWidth = 1240;
-  const rowHeight = 150;
+  const rowHeight = 240;
   const rowStart = 82;
   const chartHeight = rowStart + (availableResults.length * rowHeight) + 64;
   const graphX = 268;
   const graphWidth = 900;
-  const graphHeight = 58;
+  const graphHeight = 116;
   const currentTaxX = graphX + graphWidth * 0.15;
   const feeX = graphX + graphWidth * 0.74;
   const withdrawalTaxX = graphX + graphWidth * 0.93;
