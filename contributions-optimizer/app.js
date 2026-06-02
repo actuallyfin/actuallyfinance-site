@@ -1572,13 +1572,24 @@ function renderGrowthChart(container, inputs, results) {
     return;
   }
 
-  const chartWidth = 1240;
-  const rowHeight = 240;
+  const isCompactChart = window.matchMedia?.("(max-width: 700px)").matches ?? false;
+  const chartWidth = isCompactChart ? 700 : 1240;
+  const rowHeight = isCompactChart ? 220 : 240;
   const rowStart = 82;
   const chartHeight = rowStart + (availableResults.length * rowHeight) + 64;
-  const graphX = 268;
-  const graphWidth = 900;
+  const graphX = isCompactChart ? 158 : 268;
+  const graphWidth = isCompactChart ? 520 : 900;
   const graphHeight = 116;
+  const accountTextX = isCompactChart ? 22 : 34;
+  const taxCallout = isCompactChart
+    ? { x: graphX + 8, width: 126 }
+    : { x: graphX + 62, width: 190 };
+  const dragCallout = isCompactChart
+    ? { x: graphX + graphWidth * 0.58, width: 110 }
+    : { x: graphX + 492, width: 154 };
+  const withdrawalCallout = isCompactChart
+    ? { x: graphX + graphWidth * 0.78, width: 124 }
+    : { x: graphX + 670, width: 168 };
   const currentTaxX = graphX + graphWidth * 0.15;
   const feeX = graphX + graphWidth * 0.74;
   const withdrawalTaxX = graphX + graphWidth * 0.93;
@@ -1623,6 +1634,17 @@ function renderGrowthChart(container, inputs, results) {
     dependents: inputs.dependents,
   });
   const chartSubtitle = (row) => {
+    if (isCompactChart) {
+      if (row.account === "Taxable brokerage") return "After-tax; gains taxed at sale";
+      if (row.account === "HSA") return inputs.withdrawalAge >= 65
+        ? "Pretax; nonmedical withdrawal"
+        : "Pretax; pre-65 rules may apply";
+      if (row.account.includes("Roth")) return "Tax now; withdrawal tax-free";
+      if (row.account.includes("Traditional IRA") && row.currentTaxSavings < inputs.pretaxBudget * 0.01) {
+        return "Limited IRA deduction modeled";
+      }
+      return "Tax benefit now; taxed later";
+    }
     if (row.account === "Taxable brokerage") return "After-tax contribution; gains taxed at sale";
     if (row.account === "HSA") return inputs.withdrawalAge >= 65
       ? "Pretax contribution; nonmedical age-65+ withdrawal"
@@ -1845,17 +1867,17 @@ function renderGrowthChart(container, inputs, results) {
     return `
       <g>
         ${rowBand}
-        <text class="retained-account-title" x="34" y="${rowTop + 58}">${escapeHtml(`${row.rank}. ${row.account}`)}</text>
-        <text class="retained-account-subtitle" x="34" y="${rowTop + 78}">${escapeHtml(chartSubtitle(row))}</text>
+        <text class="retained-account-title" x="${accountTextX}" y="${rowTop + 58}">${escapeHtml(`${row.rank}. ${row.account}`)}</text>
+        <text class="retained-account-subtitle" x="${accountTextX}" y="${rowTop + 78}">${escapeHtml(chartSubtitle(row))}</text>
         ${contributionTaxArea}
         ${dragArea}
         ${withdrawalTaxArea}
         <path d="${areaPath({ points: retainedPoints, base, yFor })}" fill="${retainedColor}" stroke="${retainedStroke}" stroke-width="1.1"></path>
         <line x1="${graphX}" y1="${base}" x2="${graphX + graphWidth}" y2="${base}" stroke="${lineColor}"></line>
         ${callout({
-          x: graphX + 62,
+          x: taxCallout.x,
           y: rowTop + 8,
-          width: 190,
+          width: taxCallout.width,
           title: "Tax now",
           value: taxNowValueText(modeled),
           note: taxNowNoteText(modeled),
@@ -1866,9 +1888,9 @@ function renderGrowthChart(container, inputs, results) {
           showLeader: showContributionTax,
         })}
         ${callout({
-          x: graphX + 492,
+          x: dragCallout.x,
           y: rowTop + 8,
-          width: 154,
+          width: dragCallout.width,
           title: labelForDrag(row),
           value: `-${formatMoney(modeled.drag)} (${pct(modeled.dragRate)})`,
           note: "of no-fee value",
@@ -1876,9 +1898,9 @@ function renderGrowthChart(container, inputs, results) {
           targetY: yFor((modeled.futureBeforeTax + feeTopValue + modeled.futureBeforeTax) / 3),
         })}
         ${callout({
-          x: graphX + 670,
+          x: withdrawalCallout.x,
           y: rowTop + 8,
-          width: 168,
+          width: withdrawalCallout.width,
           title: "Tax at withdrawal",
           value: showWithdrawalTax ? `-${formatMoney(modeled.withdrawalTax)} (${pct(modeled.withdrawalTaxRate)})` : `${formatMoney(0)} (0.0%)`,
           note: showWithdrawalTax ? "of pretax value" : "tax-free withdrawal",
@@ -2043,6 +2065,11 @@ async function init() {
   populateStateSelects();
   document.getElementById("optimizer-form").addEventListener("input", renderResults);
   document.getElementById("optimizer-form").addEventListener("change", renderResults);
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(renderResults, 150);
+  });
   renderResults();
 }
 

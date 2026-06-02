@@ -417,6 +417,7 @@ td.account-unavailable-cell.note-cell {
 
 .growth-chart {
   grid-column: 1 / -1;
+  min-width: 0;
   margin-top: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -455,6 +456,7 @@ td.account-unavailable-cell.note-cell {
 
 .retained-chart-scroll {
   width: 100%;
+  min-width: 0;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -730,7 +732,7 @@ td.account-unavailable-cell.note-cell {
 
   .results-cards {
     display: grid;
-    gap: 10px;
+    gap: 8px;
   }
 
   .result-card {
@@ -752,8 +754,8 @@ td.account-unavailable-cell.note-cell {
   .card-rank,
   .card-value {
     display: grid;
-    gap: 3px;
-    padding: 11px 12px;
+    gap: 2px;
+    padding: 9px 10px;
   }
 
   .card-rank {
@@ -765,14 +767,14 @@ td.account-unavailable-cell.note-cell {
 
   .card-rank span {
     color: var(--accent-dark);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 800;
   }
 
   .card-rank strong {
     justify-self: end;
     text-align: right;
-    font-size: 1rem;
+    font-size: 0.94rem;
   }
 
   .card-value {
@@ -782,13 +784,13 @@ td.account-unavailable-cell.note-cell {
   .card-value span,
   .mobile-metrics dt {
     color: var(--muted);
-    font-size: 0.76rem;
+    font-size: 0.71rem;
     font-weight: 700;
   }
 
   .card-value strong {
     color: var(--accent-dark);
-    font-size: 1.4rem;
+    font-size: 1.18rem;
     line-height: 1.05;
   }
 
@@ -800,20 +802,21 @@ td.account-unavailable-cell.note-cell {
   .mobile-metrics div {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
+    gap: 7px;
     align-items: baseline;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid var(--line);
   }
 
   .mobile-metrics dd {
     margin: 0;
     text-align: right;
+    font-size: 0.78rem;
     font-weight: 750;
   }
 
   .card-details {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
   .card-details summary {
@@ -853,7 +856,7 @@ td.account-unavailable-cell.note-cell {
   }
 
   .retained-chart-scroll svg {
-    width: 1240px;
+    width: 700px;
     max-width: none;
   }
 
