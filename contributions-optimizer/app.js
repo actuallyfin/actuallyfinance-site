@@ -1704,10 +1704,11 @@ function renderGrowthChart(container, inputs, results) {
       yMax: Math.max(inputs.pretaxBudget, contribution, noFeeFutureValue, futureBeforeTax, futureAfterTax + withdrawalTax, 1) * 1.16,
     };
   };
+  const pointY = (point, yFor) => Number.isFinite(point.y) ? point.y : yFor(point.value);
   const areaPath = ({ points, base, yFor }) => `
     M ${points[0].x.toFixed(2)} ${base.toFixed(2)}
     ${points.map((point, index) => (
-    `${index === 0 ? "L" : "L"} ${point.x.toFixed(2)} ${yFor(point.value).toFixed(2)}`
+    `${index === 0 ? "L" : "L"} ${point.x.toFixed(2)} ${pointY(point, yFor).toFixed(2)}`
   )).join(" ")}
     L ${points[points.length - 1].x.toFixed(2)} ${base.toFixed(2)}
     Z
@@ -1715,7 +1716,7 @@ function renderGrowthChart(container, inputs, results) {
   const subtractionPath = ({ points, yFor }) => {
     if (!points.length) return "";
     return `
-      <path d="M ${points.map((point) => `${point.x.toFixed(2)} ${yFor(point.value).toFixed(2)}`).join(" L ")} Z" fill="${removedColor}"></path>
+      <path d="M ${points.map((point) => `${point.x.toFixed(2)} ${pointY(point, yFor).toFixed(2)}`).join(" L ")} Z" fill="${removedColor}"></path>
     `;
   };
   const leader = ({ startX, startY, targetX, targetY, color }) => {
@@ -1792,9 +1793,15 @@ function renderGrowthChart(container, inputs, results) {
       const visualHeight = minPositiveHeight + (safeValue / yMax) * (usableHeight - minPositiveHeight);
       return base - visualHeight;
     };
+    const contributionY = yFor(modeled.contribution);
+    const contributionHeight = base - contributionY;
+    const pretaxVisualHeight = modeled.contribution > 0 && modeled.contribution < inputs.pretaxBudget
+      ? Math.min(usableHeight, contributionHeight * (inputs.pretaxBudget / modeled.contribution))
+      : base - yFor(inputs.pretaxBudget);
+    const pretaxY = base - pretaxVisualHeight;
     const retainedPoints = [
-      { x: startX, value: inputs.pretaxBudget },
-      { x: investedX, value: modeled.contribution },
+      { x: startX, value: inputs.pretaxBudget, y: pretaxY },
+      { x: investedX, value: modeled.contribution, y: contributionY },
       { x: peakX, value: modeled.futureBeforeTax },
       { x: feeEndX, value: modeled.futureBeforeTax },
       { x: taxStartX, value: modeled.futureBeforeTax },
@@ -1804,9 +1811,9 @@ function renderGrowthChart(container, inputs, results) {
       ? subtractionPath({
         yFor,
         points: [
-          { x: startX, value: inputs.pretaxBudget },
-          { x: investedX, value: inputs.pretaxBudget },
-          { x: investedX, value: modeled.contribution },
+          { x: startX, value: inputs.pretaxBudget, y: pretaxY },
+          { x: investedX, value: inputs.pretaxBudget, y: pretaxY },
+          { x: investedX, value: modeled.contribution, y: contributionY },
         ],
       })
       : "";
@@ -1853,7 +1860,7 @@ function renderGrowthChart(container, inputs, results) {
           value: taxNowValueText(modeled),
           note: taxNowNoteText(modeled),
           targetX: showContributionTax ? (startX + investedX + investedX) / 3 : graphX + 14,
-          targetY: showContributionTax ? yFor((inputs.pretaxBudget + inputs.pretaxBudget + modeled.contribution) / 3) : yFor(modeled.contribution),
+          targetY: showContributionTax ? ((pretaxY + pretaxY + contributionY) / 3) : contributionY,
           color: showContributionTax ? taxColor : goodColor,
           good: !showContributionTax,
           showLeader: showContributionTax,
@@ -1906,7 +1913,6 @@ function renderGrowthChart(container, inputs, results) {
       <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${removedColor}"></span><span>Taxes, fees, or tax drag removed</span></div>
       <div class="chart-legend-item"><span class="chart-legend-swatch" style="background:${goodColor}"></span><span>No tax at that stage</span></div>
     </div>
-    <p class="chart-rule-note">Graphic proportions update directionally from the modeled outputs: current-tax wedge from tax paid before contribution, green area from actual contribution and net growth, drag wedge from fees or annual taxable drag, and withdrawal wedge from tax due at withdrawal.</p>
   `;
 }
 
@@ -1944,7 +1950,6 @@ function renderResults() {
       ["Current tax savings", (row) => formatMoney(row.currentTaxSavings)],
       ["Future value before tax", (row) => formatMoney(row.futureValueBeforeTax)],
       ["Tax due at withdrawal", (row) => formatMoney(row.taxDueAtWithdrawal)],
-      ["Future value after tax", (row) => formatMoney(row.futureValueAfterTax)],
       ["Withdrawal effective tax rate", (row) => formatPercent(row.withdrawalEffectiveTaxRate)],
       ["Withdrawal lowest marginal tax rate", (row) => formatPercent(row.withdrawalLowestEffectiveTaxRate)],
       ["Withdrawal highest marginal tax rate", (row) => formatPercent(row.withdrawalHighestEffectiveTaxRate)],

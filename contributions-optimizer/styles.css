@@ -571,13 +571,6 @@ td.account-unavailable-cell.note-cell {
   margin-top: 10px;
 }
 
-.chart-rule-note {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.4;
-}
-
 .chart-legend-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
