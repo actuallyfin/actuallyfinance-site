@@ -1961,39 +1961,58 @@ function renderResults() {
     });
     updateRetirementPretaxEquivalent(best, topPretaxFootnoteNumber);
 
-    const metrics = [
+    const visibleMetrics = [
       ["Rank", (row) => String(row.rank), "rank-row"],
       ["Available after withdrawal", (row) => formatMoney(row.futureValueAfterTax)],
       ["Contribution pretax equivalent", (row) => formatMoney(row.pretaxIncomeContributionToday)],
       ["Actual contribution amount", (row) => formatMoney(row.postTaxContributionToday)],
+      ["Total fees and tax impact %", (row) => formatPercent(row.totalFeesAndTaxImpactPct)],
+      ["Withdrawal effective tax rate", (row) => formatPercent(row.withdrawalEffectiveTaxRate)],
+    ];
+    const detailedMetrics = [
       ["Contribution effective tax rate", (row) => formatPercent(row.contributionEffectiveTaxRate)],
       ["Contribution lowest marginal tax rate", (row) => formatPercent(row.contributionLowestEffectiveTaxRate)],
       ["Contribution highest marginal tax rate", (row) => formatPercent(row.contributionHighestEffectiveTaxRate)],
       ["Current tax savings", (row) => formatMoney(row.currentTaxSavings)],
       ["Future value before tax", (row) => formatMoney(row.futureValueBeforeTax)],
       ["Tax due at withdrawal", (row) => formatMoney(row.taxDueAtWithdrawal)],
-      ["Withdrawal effective tax rate", (row) => formatPercent(row.withdrawalEffectiveTaxRate)],
       ["Withdrawal lowest marginal tax rate", (row) => formatPercent(row.withdrawalLowestEffectiveTaxRate)],
       ["Withdrawal highest marginal tax rate", (row) => formatPercent(row.withdrawalHighestEffectiveTaxRate)],
       ["Total fees and tax impact", (row) => formatMoney(row.totalFeesAndTaxImpact)],
-      ["Total fees and tax impact %", (row) => formatPercent(row.totalFeesAndTaxImpactPct)],
       ["Net total growth %", (row) => formatPercent(row.netTotalGrowthPct)],
       ["Net annualized growth %", (row) => formatPercent(row.netAnnualizedGrowthPct)],
       ["Modeled assumptions", (row) => assumptionDetails(row), "", "note-cell"],
     ];
+    const detailedOpen = document.getElementById("detailed-metrics")?.open ?? false;
 
     const header = `<thead><tr><th>Metric</th>${results.map((row) => (
       `<th class="${accountHeaderClass(row)}">${accountLabelWithFootnotes(row)}</th>`
     )).join("")}</tr></thead>`;
-    const body = metrics.map(([name, formatter, rowClass = "", cellClass = ""]) => (
+    const metricRows = (metrics) => metrics.map(([name, formatter, rowClass = "", cellClass = ""]) => (
       `<tr class="${rowClass}"><td>${escapeHtml(name)}</td>${results.map((row) => {
         const unavailable = row.futureValueAfterTax === null && name === "Available after withdrawal";
         const classNames = accountCellClass(row, cellClass, unavailable);
         return `<td class="${classNames}">${formatter(row)}</td>`;
       }).join("")}</tr>`
     )).join("");
+    const body = metricRows(visibleMetrics);
+    const detailedBody = metricRows(detailedMetrics);
 
     table.innerHTML = `${header}<tbody>${body}</tbody>`;
+    const priorDetailedMetrics = document.getElementById("detailed-metrics");
+    if (priorDetailedMetrics) priorDetailedMetrics.remove();
+    const detailWrap = document.createElement("details");
+    detailWrap.id = "detailed-metrics";
+    detailWrap.className = "metrics-details";
+    detailWrap.open = detailedOpen;
+    detailWrap.innerHTML = `
+      <summary>Detailed metrics</summary>
+      <div class="table-wrap detailed-table-wrap">
+        <table class="detailed-results-table">${header}<tbody>${detailedBody}</tbody></table>
+      </div>
+    `;
+    table.closest(".table-wrap")?.insertAdjacentElement("afterend", detailWrap);
+
     cards.innerHTML = results.map((row) => {
       const unavailable = row.futureValueAfterTax === null;
       const accountLabel = accountLabelWithFootnotes(row);
@@ -2015,13 +2034,25 @@ function renderResults() {
           <dl class="mobile-metrics">
             <div><dt>Contribution pretax equivalent</dt><dd>${formatMoney(row.pretaxIncomeContributionToday)}</dd></div>
             <div><dt>Actual contribution amount</dt><dd>${formatMoney(row.postTaxContributionToday)}</dd></div>
-            <div><dt>Contribution tax rate</dt><dd>${formatPercent(row.contributionEffectiveTaxRate)}</dd></div>
-            <div><dt>Future value before tax</dt><dd>${formatMoney(row.futureValueBeforeTax)}</dd></div>
-            <div><dt>Tax due at withdrawal</dt><dd>${formatMoney(row.taxDueAtWithdrawal)}</dd></div>
-            <div><dt>Withdrawal tax rate</dt><dd>${formatPercent(row.withdrawalEffectiveTaxRate)}</dd></div>
-            <div><dt>Fees and tax impact</dt><dd>${formatMoney(row.totalFeesAndTaxImpact)}</dd></div>
-            <div><dt>Net annualized growth</dt><dd>${formatPercent(row.netAnnualizedGrowthPct)}</dd></div>
+            <div><dt>Total fees and tax impact %</dt><dd>${formatPercent(row.totalFeesAndTaxImpactPct)}</dd></div>
+            <div><dt>Withdrawal effective tax rate</dt><dd>${formatPercent(row.withdrawalEffectiveTaxRate)}</dd></div>
           </dl>
+          <details class="card-details">
+            <summary>Detailed metrics</summary>
+            <dl class="mobile-metrics mobile-metrics-detail">
+              <div><dt>Contribution effective tax rate</dt><dd>${formatPercent(row.contributionEffectiveTaxRate)}</dd></div>
+              <div><dt>Contribution lowest marginal tax rate</dt><dd>${formatPercent(row.contributionLowestEffectiveTaxRate)}</dd></div>
+              <div><dt>Contribution highest marginal tax rate</dt><dd>${formatPercent(row.contributionHighestEffectiveTaxRate)}</dd></div>
+              <div><dt>Current tax savings</dt><dd>${formatMoney(row.currentTaxSavings)}</dd></div>
+              <div><dt>Future value before tax</dt><dd>${formatMoney(row.futureValueBeforeTax)}</dd></div>
+              <div><dt>Tax due at withdrawal</dt><dd>${formatMoney(row.taxDueAtWithdrawal)}</dd></div>
+              <div><dt>Withdrawal lowest marginal tax rate</dt><dd>${formatPercent(row.withdrawalLowestEffectiveTaxRate)}</dd></div>
+              <div><dt>Withdrawal highest marginal tax rate</dt><dd>${formatPercent(row.withdrawalHighestEffectiveTaxRate)}</dd></div>
+              <div><dt>Total fees and tax impact</dt><dd>${formatMoney(row.totalFeesAndTaxImpact)}</dd></div>
+              <div><dt>Net total growth %</dt><dd>${formatPercent(row.netTotalGrowthPct)}</dd></div>
+              <div><dt>Net annualized growth %</dt><dd>${formatPercent(row.netAnnualizedGrowthPct)}</dd></div>
+            </dl>
+          </details>
           <details class="card-details">
             <summary>Modeled assumptions</summary>
             <p>${escapeHtml(row.assumptions)}</p>
@@ -2039,6 +2070,7 @@ function renderResults() {
     )).join("");
   } catch (error) {
     table.innerHTML = `<tbody><tr><td>Error</td><td>${escapeHtml(error.message)}</td></tr></tbody>`;
+    document.getElementById("detailed-metrics")?.remove();
     cards.innerHTML = `<article class="result-card"><strong>Error</strong><p>${escapeHtml(error.message)}</p></article>`;
     topAccount.textContent = "Check inputs";
     if (topAccountContext) topAccountContext.textContent = "";

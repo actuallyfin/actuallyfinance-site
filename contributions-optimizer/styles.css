@@ -315,6 +315,21 @@ input[type="range"]:focus-visible {
   overflow-x: auto;
 }
 
+.metrics-details {
+  margin-top: 10px;
+}
+
+.metrics-details summary {
+  cursor: pointer;
+  color: var(--accent-dark);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.detailed-table-wrap {
+  margin-top: 8px;
+}
+
 .results-cards {
   display: none;
 }
@@ -730,6 +745,10 @@ td.account-unavailable-cell.note-cell {
     display: none;
   }
 
+  .metrics-details {
+    display: none;
+  }
+
   .results-cards {
     display: grid;
     gap: 8px;
@@ -819,6 +838,10 @@ td.account-unavailable-cell.note-cell {
     padding: 8px 10px;
   }
 
+  .card-details + .card-details {
+    border-top: 1px solid var(--line);
+  }
+
   .card-details summary {
     cursor: pointer;
     color: var(--accent-dark);
@@ -831,6 +854,11 @@ td.account-unavailable-cell.note-cell {
     color: var(--muted);
     font-size: 0.84rem;
     line-height: 1.35;
+  }
+
+  .mobile-metrics-detail {
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
   }
 
   .footnotes,
