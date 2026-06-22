@@ -17,15 +17,15 @@
             "indicatorCount": 5,
             "signalScore": "1.0",
             "triggerScore": "2.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -42,15 +42,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -67,15 +67,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -92,15 +92,15 @@
             "indicatorCount": 2,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -117,15 +117,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -142,15 +142,15 @@
             "indicatorCount": 2,
             "signalScore": "1.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -167,15 +167,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         }
@@ -198,15 +198,15 @@
             "indicatorCount": 5,
             "signalScore": "1.0",
             "triggerScore": "2.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -223,15 +223,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -248,15 +248,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -273,15 +273,15 @@
             "indicatorCount": 2,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -298,15 +298,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -323,15 +323,15 @@
             "indicatorCount": 2,
             "signalScore": "1.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -348,15 +348,15 @@
             "indicatorCount": 1,
             "signalScore": "0.0",
             "triggerScore": "1.0",
-            "latestPriceDate": "2026-06-18",
-            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1781740800&period2=1781913600&interval=1d&filter=history&frequency=1d",
+            "latestPriceDate": "2026-06-22",
+            "priceSourceUrl": "https://finance.yahoo.com/quote/SPY/history/?period1=1782086400&period2=1782259200&interval=1d&filter=history&frequency=1d",
             "latestMacroReleaseDate": "2026-06-17",
-            "spyClose": "746.74",
-            "spySma200": "684.49",
+            "spyClose": "744.39",
+            "spySma200": "685.03",
             "recentTrendHeader": "200D SMA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from daily returns. Idle capital earns the cash proxy return; Sharpe and Sortino are calculated on excess returns over that same cash series. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         }
@@ -389,7 +389,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -414,7 +414,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -439,7 +439,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -464,7 +464,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -489,7 +489,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -514,7 +514,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -539,7 +539,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "0 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. Trading costs are set to 0 bps.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         }
@@ -570,7 +570,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -595,7 +595,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -620,7 +620,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -645,7 +645,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -670,7 +670,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -695,7 +695,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         },
@@ -720,7 +720,7 @@
             "recentTrendHeader": "10M MA",
             "tradeCostLabel": "10 bps bid/ask",
             "statsNote": "Stats are computed from monthly returns. The trend signal updates at month-end; idle capital earns the compounded monthly cash proxy return. Sharpe and Sortino are calculated on excess returns over cash. A 10 bps bid/ask spread is modeled as a 5 bps one-way cost whenever a strategy changes between equity and cash.",
-            "lastUpdateCheck": "2026-06-19",
+            "lastUpdateCheck": "2026-06-22",
             "nextMacroReleaseDate": "2026-06-24"
           }
         }
