@@ -3,5 +3,5 @@ unemployment,Unemployment Rate Trend,Rate above its 12-month average,2.0,4.3,4.3
 retail_sales,Real Retail Sales Growth,YoY growth below 0%,1.0,226959.90445774538,0.0,2026-05,2026-06-17,2026-07-16,0.02601504906425678,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3asR
 industrial_production,Industrial Production Growth,YoY growth below 0%,1.0,102.6475,0.0,2026-05,2026-06-15,2026-07-17,0.01665915585026556,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3atC
 employment,Employment Growth,Labor-force-adjusted YoY growth below 0%,0.0,0.9348710591610908,0.0,2026-05,2026-06-05,2026-07-02,0.005721613506527445,False,0.0,Not used,neutral,https://fred.stlouisfed.org/graph/?g=3au3
-real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20414.119,0.03,2026-04,2026-05-28,2026-06-25,-0.011845777006152192,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
+real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20464.525,0.03,2026-05,2026-06-25,2026-07-30,-0.002419548253498993,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
 housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.006920354190430273,-0.1,2026-05,2026-06-16,2026-07-17,-0.08456974941018947,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
