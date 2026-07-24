@@ -4,4 +4,4 @@ retail_sales,Real Retail Sales Growth,YoY growth below 0%,1.0,229368.76481100247
 industrial_production,Industrial Production Growth,YoY growth below 0%,1.0,102.6395,0.0,2026-06,2026-07-17,2026-08-18,0.011440847075981697,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3atC
 employment,Employment Growth,Labor-force-adjusted YoY growth below 0%,0.0,0.9387451434239894,0.0,2026-06,2026-07-02,2026-08-07,0.009246693778185655,False,0.0,Not used,neutral,https://fred.stlouisfed.org/graph/?g=3au3
 real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20464.525,0.03,2026-05,2026-06-25,2026-07-30,-0.002419548253498993,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
-housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.008425937953920099,-0.1,2026-06,2026-07-17,2026-07-24,0.04105243552495019,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
+housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.008425937953920099,-0.1,2026-06,2026-07-17,2026-08-18,0.04105243552495019,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
