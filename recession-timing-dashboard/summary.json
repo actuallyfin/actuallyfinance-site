@@ -14,7 +14,7 @@
   "trigger_score": 2.0,
   "max_score": 6.0,
   "spy_close": 763.25,
-  "spy_sma_200": 721.8774664306641,
+  "spy_sma_200": 721.8774685668945,
   "trend_rule_label": "200D SMA",
   "trend_rule_text": "200-day simple moving average, checked daily",
   "trend_tile_label": "SPY ETF vs 200D SMA",
