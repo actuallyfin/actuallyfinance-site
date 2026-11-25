@@ -1,7 +1,7 @@
 key,name,rule,signal_score,latest_raw_value,current_threshold,data_through,available_date,next_update,latest_value,tripped,score_contribution,status_text,status_class,source_url
 unemployment,Unemployment Rate Trend,Rate above its 12-month average,2.0,4.1,4.266666666666667,2026-10,2026-11-06,2026-12-04,-0.16666666666666696,False,0.0,Clear,good,https://fred.stlouisfed.org/series/UNRATE
 retail_sales,Real Retail Sales Growth,YoY growth below 0%,1.0,220053.90926286986,0.0,2026-10,2026-11-17,2026-12-16,0.023844653020699935,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3asR
-industrial_production,Industrial Production Growth,YoY growth below 0%,1.0,103.3954,0.0,2026-10,2026-11-17,2026-12-16,0.021496845963475453,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3atC
+industrial_production,Industrial Production Growth,YoY growth below 0%,1.0,102.2421,0.0,2026-10,2026-11-24,2026-12-16,0.01659388385772753,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3atC
 employment,Employment Growth,Labor-force-adjusted YoY growth below 0%,0.0,0.9332681052008694,0.0,2026-10,2026-11-06,2026-12-04,0.00928923742272092,False,0.0,Not used,neutral,https://fred.stlouisfed.org/graph/?g=3au3
-real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20950.003,0.03,2026-09,2026-10-29,2026-11-25,0.0047924516356772084,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
-housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.007669187909750824,-0.1,2026-10,2026-11-18,2026-11-25,-0.003358227409530068,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
+real_income,Real Personal Income Growth,YoY growth below 3%,1.0,20950.003,0.03,2026-09,2026-10-29,2026-12-23,0.0047924516356772084,True,1.0,Tripped,bad,https://fred.stlouisfed.org/graph/?g=3aud
+housing_starts,Housing Starts Growth,Labor-force-adjusted YoY growth below -10%,1.0,0.007669187909750824,-0.1,2026-10,2026-11-18,2026-12-17,-0.003358227409530068,False,0.0,Clear,good,https://fred.stlouisfed.org/graph/?g=3aud
